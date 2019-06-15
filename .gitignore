@@ -1,11 +1,10 @@
 *.so
 *.o
 *.elf
+*.gcda
+*.gba
+*.bin
 EBOOT.BIN
-/libretro/obj/
-
-/libretro/msvc/msvc-2010/Debug/
-/libretro/msvc/msvc-2010/Release/
 *.suo
 *.sdf
 *.bc
