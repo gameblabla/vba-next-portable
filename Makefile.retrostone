@@ -1,6 +1,6 @@
 PRGNAME     = vbanext.elf
-CC          = gcc
-CXX 		= g++
+CC          = /opt/retrostone-toolchain/bin/arm-buildroot-linux-musleabihf-gcc
+CXX 		= /opt/retrostone-toolchain/bin/arm-buildroot-linux-musleabihf-g++
 
 #### Configuration
 
@@ -8,6 +8,7 @@ CXX 		= g++
 PORT = retrostone
 # Possible values : alsa, oss, portaudio
 SOUND_ENGINE = alsa
+PROFILE = APPLY
 
 #### End of Configuration
 
@@ -17,19 +18,29 @@ INCLUDES	= -Ilibretro-common/include -Isrc
 INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers -Ishell/input/sdl -Ishell/fonts -Ishell/menu
 
 DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
-DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\"
-# Extra defines
-DEFINES		+= -DUSE_FRAME_SKIP -DUSE_TWEAK_SPEEDHACK -DRETROSTONE
+DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\" -DRETROSTONE
 
-CFLAGS		= -Ofast -march=native -fno-common -Wall $(INCLUDES) $(DEFINES)
+# Retrostone extra defines
+DEFINES		+= -DHAVE_NEON -DTHREADED_RENDERER
+
+CFLAGS		= -mcpu=cortex-a7 -mfpu=neon -Ofast -fsingle-precision-constant -fno-PIC -flto -fno-common -Wall $(INCLUDES) $(DEFINES)
+ifeq ($(PROFILE), YES)
+CFLAGS 		+= -fprofile-generate=/home/useless/profile
+endif
+ifeq ($(PROFILE), APPLY)
+CFLAGS 		+= -fprofile-use
+endif
 CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
-LDFLAGS     = -lc -lgcc -lm -lSDL -lz -pthread -lportaudio
+LDFLAGS     = -lc -lgcc -lm -lSDL -lz -pthread -flto -s
 
 ifeq ($(SOUND_ENGINE), alsa)
 LDFLAGS 		+= -lasound
 endif
 ifeq ($(SOUND_ENGINE), portaudio)
 LDFLAGS 		+= -lasound -lportaudio
+endif
+ifeq ($(PROFILE), YES)
+CFLAGS 		+= -lgcov
 endif
 
 # Files to be compiled
@@ -38,9 +49,11 @@ SRCDIR		+= ./shell/input/sdl/ ./shell/video/$(PORT) ./shell/audio/$(SOUND_ENGINE
 VPATH		= $(SRCDIR)
 SRC_C		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
 SRC_CPP		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
+SRC_S		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.S))
 OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CPP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CPP)))
-OBJS		= $(OBJ_C) $(OBJ_CPP)
+OBJ_S		= $(notdir $(patsubst %.S, %.o, $(SRC_S)))
+OBJS		= $(OBJ_C) $(OBJ_CPP) $(OBJ_S)
 
 # Rules to make executable
 $(PRGNAME): $(OBJS)  
@@ -48,6 +61,9 @@ $(PRGNAME): $(OBJS)
 	
 $(OBJ_CPP) : %.o : %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	
+$(OBJ_S) : %.o : %.S
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(PRGNAME)$(EXESUFFIX) *.o
