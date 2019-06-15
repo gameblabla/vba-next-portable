@@ -1,0 +1,15 @@
+#ifndef SHARED_H
+#define SHARED_H
+
+#if defined(RS97)
+#define SOUND_OUTPUT_FREQUENCY 22050
+#define SOUND_SAMPLES_SIZE 1024
+#elif defined(RETROSTONE)
+#define SOUND_OUTPUT_FREQUENCY 48000
+#define SOUND_SAMPLES_SIZE 2048
+#else
+#define SOUND_OUTPUT_FREQUENCY 32000
+#define SOUND_SAMPLES_SIZE 1024
+#endif
+
+#endif
