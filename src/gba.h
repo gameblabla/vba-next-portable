@@ -102,7 +102,7 @@ extern bool CPUWriteBatteryFile(const char *);
 extern bool CPUReadBatteryFile(const char *);
 extern bool CPUReadState(const uint8_t * data, unsigned size);
 extern unsigned CPUWriteState(uint8_t* data, unsigned size);
-extern int CPULoadRom(const char *);
+extern int CPULoadRom(char *);
 extern int CPULoadRomData(const char *data, int size);
 extern void doMirroring(bool);
 extern void CPUUpdateRegister(uint32_t, uint16_t);

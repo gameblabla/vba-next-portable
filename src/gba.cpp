@@ -22,6 +22,10 @@
 #include "elf.h"
 #endif
 
+#ifdef HAVE_NEON
+#include "neon.h"
+#endif
+
 #define DEBUG_RENDERER_MODE0 1
 #define DEBUG_RENDERER_MODE1 1
 #define DEBUG_RENDERER_MODE2 1
@@ -6885,6 +6889,9 @@ static inline void gfxDrawTextScreen(u16 control, u16 hofs, u16 vofs)
     sizeY = 512;
     break;
   }
+  
+  // This was missing in the upstream source code
+  INIT_RENDERER_CONTEXT(renderer_idx);
 
   int maskX = sizeX-1;
   int maskY = sizeY-1;
@@ -9182,7 +9189,7 @@ static void applyCartridgeOverride(char* code) {
 #endif
 }
 
-int CPULoadRom(const char * file)
+int CPULoadRom(char * file)
 {
 	if (!CPUSetupBuffers()) return 0;
 	
