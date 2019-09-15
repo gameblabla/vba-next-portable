@@ -99,7 +99,7 @@ void Update_Video_Ingame(uint16_t* __restrict__ pixels)
 	switch(option.fullscreen) 
 	{
 		case 0:
-			bitmap_scale(0,0,internal_width,internal_height,240,160, 256, HOST_WIDTH_RESOLUTION - 240,(uint16_t* __restrict__)source_graph,(uint16_t* __restrict__)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-240)/2+(HOST_HEIGHT_RESOLUTION-160)/2*HOST_WIDTH_RESOLUTION);
+			bitmap_scale(0,0,internal_width,internal_height,240*2,160*2, 256, HOST_WIDTH_RESOLUTION - 240*2,(uint16_t* __restrict__)source_graph,(uint16_t* __restrict__)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-240*2)/2+(HOST_HEIGHT_RESOLUTION-160*2)/2*HOST_WIDTH_RESOLUTION);
 		break;
 		// Fullscreen
 		case 1:

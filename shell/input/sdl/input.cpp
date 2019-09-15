@@ -15,7 +15,7 @@ int32_t update_input(void)
 	
 	SDL_PollEvent(&event);
 	
-	if ((keys[SDLK_RETURN] == SDL_PRESSED && keys[SDLK_ESCAPE] == SDL_PRESSED) || keys[SDLK_END] == SDL_PRESSED) emulator_state = 1;
+	if ((keys[SDLK_END] == SDL_PRESSED) || keys[SDLK_RCTRL] == SDL_PRESSED) emulator_state = 1;
 
 	// UP
 	if (keys[option.config_buttons[0] ] == SDL_PRESSED)

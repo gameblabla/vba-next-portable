@@ -83,28 +83,37 @@ void Update_Video_Menu()
 
 void Update_Video_Ingame(uint16_t* __restrict__ pixels)
 {
-	uint32_t internal_width, internal_height, keep_aspect_width, keep_aspect_height;
-	uint16_t*  source_graph;
+	uint_fast16_t x, y, pitch;
+	uint32_t internal_width, internal_height;
+	uint16_t *source_graph, *src, *dst;
 
 	internal_width = INTERNAL_GBA_WIDTH;
 	internal_height = INTERNAL_GBA_HEIGHT;
 	source_graph = (uint16_t* __restrict__)pixels;
-	keep_aspect_width = 320;
-	keep_aspect_height = 213;
 	
 	SDL_LockSurface(sdl_screen);
 	
 	switch(option.fullscreen) 
 	{
 		case 0:
-			bitmap_scale(0,0,internal_width,internal_height,240,160, 256, HOST_WIDTH_RESOLUTION - 240,(uint16_t* __restrict__)source_graph,(uint16_t* __restrict__)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-240)/2+(HOST_HEIGHT_RESOLUTION-160)/2*HOST_WIDTH_RESOLUTION);
+			pitch = HOST_WIDTH_RESOLUTION;
+			src = (uint16_t* __restrict__)source_graph;
+			dst = (uint16_t* __restrict__)sdl_screen->pixels
+				+ ((HOST_WIDTH_RESOLUTION - internal_width) / 4) * sizeof(uint16_t)
+				+ ((HOST_HEIGHT_RESOLUTION - internal_height) / 2) * pitch;
+			for (y = 0; y < internal_height; y++)
+			{
+				memmove(dst, src, internal_width * sizeof(uint16_t));
+				src += 256;
+				dst += pitch;
+			}
 		break;
 		// Fullscreen
 		case 1:
-			bitmap_scale(0, 0, internal_width, internal_height, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 256, 0, (uint16_t* __restrict__)source_graph, (uint16_t* __restrict__)sdl_screen->pixels);
+			gba_upscale((uint16_t __restrict__*)sdl_screen->pixels, (uint16_t __restrict__*)source_graph, 240, 160, 512, sdl_screen->pitch);
 		break;
 		case 2:
-			bitmap_scale(0,0,internal_width,internal_height,keep_aspect_width,keep_aspect_height, 256, HOST_WIDTH_RESOLUTION - keep_aspect_width,(uint16_t* __restrict__)source_graph,(uint16_t* __restrict__)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-keep_aspect_width)/2+(HOST_HEIGHT_RESOLUTION-keep_aspect_height)/2*HOST_WIDTH_RESOLUTION);
+			gba_upscale_aspect((uint16_t __restrict__*)sdl_screen->pixels + (480*8), (uint16_t __restrict__*)source_graph, 240, 160, 512, sdl_screen->pitch);
 		break;
 		// Hqx
 		case 3:

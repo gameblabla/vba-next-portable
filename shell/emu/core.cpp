@@ -252,7 +252,7 @@ static int get_frameskip_code()
 	if (strcmp(var.value, "2") == 0) return 0x2;
 	if (strcmp(var.value, "3") == 0) return 0x3;
 	if (strcmp(var.value, "4") == 0) return 0x4;*/
-	return 0x13;
+	return 0x3;
 }
 #endif
 
