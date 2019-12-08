@@ -3,7 +3,7 @@
 mkdir -p opk
 cp ./vbanext.elf opk/vbanext.elf
 cp ./vbanext.png opk/vbanext.png
-cp ./docs/LICENSE opk/COPYING
+cp ./LICENSE opk/COPYING
 
 # https://unix.stackexchange.com/questions/219268/how-to-add-new-lines-when-using-echo
 print()

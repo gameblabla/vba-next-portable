@@ -8,7 +8,7 @@ CXX 		= /opt/retrostone-toolchain/bin/arm-buildroot-linux-musleabihf-g++
 PORT = retrostone
 # Possible values : alsa, oss, portaudio
 SOUND_ENGINE = alsa
-PROFILE = APPLY
+PROFILE = 0
 
 #### End of Configuration
 
@@ -17,21 +17,22 @@ GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 INCLUDES	= -Ilibretro-common/include -Isrc
 INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers -Ishell/input/sdl -Ishell/fonts -Ishell/menu
 
-DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
+DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND -DINTERNAL_BUFFER_GBA
 DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\" -DRETROSTONE
 
 # Retrostone extra defines
 DEFINES		+= -DHAVE_NEON -DTHREADED_RENDERER
 
-CFLAGS		= -mcpu=cortex-a7 -mfpu=neon -Ofast -fsingle-precision-constant -fno-PIC -flto -fno-common -Wall $(INCLUDES) $(DEFINES)
+CFLAGS		= -march=armv7ve+neon-vfpv4 -mtune=cortex-a7 -mfpu=neon -Ofast -fsingle-precision-constant -fno-PIC -flto -fno-common -Wall $(INCLUDES) $(DEFINES)
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/home/useless/profile
 endif
 ifeq ($(PROFILE), APPLY)
 CFLAGS 		+= -fprofile-use
 endif
-CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
-LDFLAGS     = -lc -lgcc -lm -lSDL -lz -pthread -flto -s
+CFLAGS		+= -fdata-sections -ffunction-sections -fsingle-precision-constant
+CXXFLAGS	= $(CFLAGS) -ftree-vectorize -fno-rtti -fno-exceptions -std=gnu++11
+LDFLAGS     = -lc -lgcc -lm -lSDL -lz -pthread -flto -Wl,--as-needed -Wl,--gc-sections -s
 
 ifeq ($(SOUND_ENGINE), alsa)
 LDFLAGS 		+= -lasound

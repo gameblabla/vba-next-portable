@@ -5,7 +5,7 @@ CXX 		= g++
 #### Configuration
 
 # Possible values : retrostone, rs97, rs90
-PORT = retrostone
+PORT = gcw0
 # Possible values : alsa, oss, portaudio
 SOUND_ENGINE = alsa
 
@@ -19,9 +19,9 @@ INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers 
 DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
 DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\"
 # Extra defines
-DEFINES		+= -DUSE_FRAME_SKIP -DUSE_TWEAK_SPEEDHACK -DRETROSTONE
+DEFINES		+= -DUSE_FRAME_SKIP -DUSE_TWEAKS -DRETROSTONE -DENABLE_JOYSTICKCODE -DIPU_SCALING_NONATIVE
 
-CFLAGS		= -Ofast -march=native -fno-common -Wall $(INCLUDES) $(DEFINES)
+CFLAGS		= -Ofast -g3 -march=native -fno-common $(INCLUDES) $(DEFINES)
 CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 LDFLAGS     = -lc -lgcc -lm -lSDL -lz -pthread -lportaudio
 
