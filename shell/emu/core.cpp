@@ -252,7 +252,7 @@ static int get_frameskip_code()
 	if (strcmp(var.value, "2") == 0) return 0x2;
 	if (strcmp(var.value, "3") == 0) return 0x3;
 	if (strcmp(var.value, "4") == 0) return 0x4;*/
-	return 0x3;
+	return 0x13;
 }
 #endif
 
@@ -473,9 +473,6 @@ int main(int argc, char* argv[])
 
 	snprintf(GameName_emu, sizeof(GameName_emu), "%s", basename(argv[1]));
 	
-	Init_Video();
-	Audio_Init();
-	
 	vbanext_init();
 #if USE_FRAME_SKIP
 	SetFrameskip(get_frameskip_code());
@@ -490,6 +487,9 @@ int main(int argc, char* argv[])
 	
 	/* Init_Configuration also takes care of EEPROM saves so execute it after the game has been loaded in memory. */
 	Init_Configuration();
+	
+	Init_Video();
+	Audio_Init();
 	
 	while(!done)
 	{
