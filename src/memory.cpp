@@ -57,17 +57,17 @@ uint8_t *utilLoad(const char *file, bool (*accept)(const char *), uint8_t *data,
 {
     uint8_t *image = NULL;
 	FILE *fp       = fopen(file,"rb");
-    if(!fp) return NULL;
+    if (!fp) return NULL;
 
-	fseek(fp, 0, SEEK_END); /*go to end*/
-	size = ftell(fp); /* get position at end (length)*/
-	rewind(fp);
-
+	fseek(fp, 0, SEEK_END); /* Go to end */
+	size = ftell(fp); /* Get position at end (length) */
+	fseek(fp, 0, SEEK_SET);
+	
 	image = data;
-
+	
 	if(image == NULL)
 	{
-		/*allocate buffer memory if none was passed to the function*/
+		/* Allocate buffer memory if none was passed to the function*/
 		image = (uint8_t *)malloc(utilGetSize(size));
 		if(image == NULL)
 		{
@@ -76,7 +76,7 @@ uint8_t *utilLoad(const char *file, bool (*accept)(const char *), uint8_t *data,
 		}
 	}
 
-	fread(image, 1, size, fp); /* read into buffer*/
+	fread(image, 1, size, fp); /* read into buffer */
 	fclose(fp);
 	return image;
 }
