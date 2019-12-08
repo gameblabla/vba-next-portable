@@ -28,6 +28,7 @@
 #include "video_blit.h"
 #include "scaler.h"
 #include "config.h"
+#include "globals.h"
 
 SDL_Surface *sdl_screen, *backbuffer;
 
@@ -104,7 +105,7 @@ void Update_Video_Ingame(uint16_t* __restrict__ pixels)
 			for (y = 0; y < internal_height; y++)
 			{
 				memmove(dst, src, internal_width * sizeof(uint16_t));
-				src += 256;
+				src += PIX_BUFFER_SCREEN_WIDTH;
 				dst += pitch;
 			}
 		break;

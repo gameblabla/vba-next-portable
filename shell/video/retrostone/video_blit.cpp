@@ -28,6 +28,7 @@
 #include "video_blit.h"
 #include "scaler.h"
 #include "config.h"
+#include "globals.h"
 
 SDL_Surface *sdl_screen, *backbuffer;
 
@@ -99,14 +100,14 @@ void Update_Video_Ingame(uint16_t* __restrict__ pixels)
 	switch(option.fullscreen) 
 	{
 		case 0:
-			bitmap_scale(0,0,internal_width,internal_height,240*2,160*2, 256, HOST_WIDTH_RESOLUTION - 240*2,(uint16_t* __restrict__)source_graph,(uint16_t* __restrict__)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-240*2)/2+(HOST_HEIGHT_RESOLUTION-160*2)/2*HOST_WIDTH_RESOLUTION);
+			bitmap_scale(0,0,internal_width,internal_height,240*2,160*2, PIX_BUFFER_SCREEN_WIDTH, HOST_WIDTH_RESOLUTION - 240*2,(uint16_t* __restrict__)source_graph,(uint16_t* __restrict__)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-240*2)/2+(HOST_HEIGHT_RESOLUTION-160*2)/2*HOST_WIDTH_RESOLUTION);
 		break;
 		// Fullscreen
 		case 1:
-			bitmap_scale(0, 0, internal_width, internal_height, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 256, 0, (uint16_t* __restrict__)source_graph, (uint16_t* __restrict__)sdl_screen->pixels);
+			bitmap_scale(0, 0, internal_width, internal_height, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, PIX_BUFFER_SCREEN_WIDTH, 0, (uint16_t* __restrict__)source_graph, (uint16_t* __restrict__)sdl_screen->pixels);
 		break;
 		case 2:
-			bitmap_scale(0,0,internal_width,internal_height,keep_aspect_width,keep_aspect_height, 256, HOST_WIDTH_RESOLUTION - keep_aspect_width,(uint16_t* __restrict__)source_graph,(uint16_t* __restrict__)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-keep_aspect_width)/2+(HOST_HEIGHT_RESOLUTION-keep_aspect_height)/2*HOST_WIDTH_RESOLUTION);
+			bitmap_scale(0,0,internal_width,internal_height,keep_aspect_width,keep_aspect_height, PIX_BUFFER_SCREEN_WIDTH, HOST_WIDTH_RESOLUTION - keep_aspect_width,(uint16_t* __restrict__)source_graph,(uint16_t* __restrict__)sdl_screen->pixels+(HOST_WIDTH_RESOLUTION-keep_aspect_width)/2+(HOST_HEIGHT_RESOLUTION-keep_aspect_height)/2*HOST_WIDTH_RESOLUTION);
 		break;
 		// Hqx
 		case 3:

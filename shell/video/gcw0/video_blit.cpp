@@ -28,6 +28,7 @@
 #include "video_blit.h"
 #include "scaler.h"
 #include "config.h"
+#include "globals.h"
 
 SDL_Surface *sdl_screen, *backbuffer;
 
@@ -35,7 +36,7 @@ uint32_t width_of_surface;
 uint16_t* Draw_to_Virtual_Screen;
 uint_fast8_t aspect_ratio_hw = 0;
 
-#define FLAGS_SDL SDL_HWSURFACE
+#define FLAGS_SDL SDL_HWSURFACE 
 
 #ifndef SDL_TRIPLEBUF
 #define SDL_TRIPLEBUF SDL_DOUBLEBUF
@@ -44,6 +45,12 @@ uint_fast8_t aspect_ratio_hw = 0;
 #ifdef ENABLE_JOYSTICKCODE
 static SDL_Joystick *sdl_joy;
 #endif
+
+#if !IPU_SCALING_NONATIVE || INTERNAL_BUFFER_GBA
+#error "GCW0 port requires IPU_SCALING_NONATIVE to be defined and INTERNAL_BUFFER_GBA to be undefined"
+#endif
+
+uint16_t* pix;
 
 static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
 
@@ -80,49 +87,60 @@ void Init_Video()
 	SDL_Init(SDL_INIT_VIDEO);
 	#endif
 	
+	if (sdl_screen && SDL_MUSTLOCK(sdl_screen)) SDL_UnlockSurface(sdl_screen);
 	SDL_ShowCursor(0);
 	
 	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, FLAGS_SDL);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0,0,0,0);
 	
+	/* This will avoid having an internal buffer for VBA Next and draw directly to the screen instead.
+	 * This saves memory and CPU usage, especially on lower end devices. */
+	pix = (uint16_t*) sdl_screen->pixels;
+	
 	aspect_ratio_hw = get_keep_aspect_ratio();
+	if (SDL_MUSTLOCK(sdl_screen)) SDL_LockSurface(sdl_screen);
 	
 	Set_Video_InGame();
 }
 
 void Set_Video_Menu()
 {
+	if (sdl_screen && SDL_MUSTLOCK(sdl_screen)) SDL_UnlockSurface(sdl_screen);
+	
+	/* Fix mismatches when adjusting IPU ingame */
+	if (get_keep_aspect_ratio() == 1 && option.fullscreen == 0) option.fullscreen = 0;
+	else if (get_keep_aspect_ratio() == 0 && option.fullscreen == 1) option.fullscreen = 1;
+	
 	if (sdl_screen->w != HOST_WIDTH_RESOLUTION)
 	{
 		//memcpy(pix, sdl_screen->pixels, (INTERNAL_GBA_WIDTH * INTERNAL_GBA_HEIGHT)*2);
 		sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, FLAGS_SDL);
 	}
+	
+	if (SDL_MUSTLOCK(sdl_screen)) SDL_LockSurface(sdl_screen);
 }
 
 void Set_Video_InGame()
 {
-	/* Failsafe, just in case. Should be moved elsewhere but meh. */
-	if (option.fullscreen < 0 || option.fullscreen > 2) option.fullscreen = 1;
-	
+	if (sdl_screen && SDL_MUSTLOCK(sdl_screen)) SDL_UnlockSurface(sdl_screen);
+		
 	switch(option.fullscreen) 
 	{
-		case 0:
-			sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, FLAGS_SDL);
-			width_of_surface = INTERNAL_GBA_WIDTH;
-		break;
 		/* Stretched, fullscreen*/
-		case 1:
+		case 0:
 			set_keep_aspect_ratio(0);
 			sdl_screen = SDL_SetVideoMode(240, 160, 16, FLAGS_SDL);
 			width_of_surface = INTERNAL_GBA_WIDTH;
 		break;
 		/* Keep Aspect Ratio */
-		case 2:
+		case 1:
 			set_keep_aspect_ratio(1);
 			sdl_screen = SDL_SetVideoMode(240, 160, 16, FLAGS_SDL);
 			width_of_surface = INTERNAL_GBA_WIDTH;
 		break;
     }
+    
+	if (SDL_MUSTLOCK(sdl_screen)) SDL_LockSurface(sdl_screen);
 }
 
 void Close_Video()
@@ -138,32 +156,13 @@ void Close_Video()
 	set_keep_aspect_ratio(aspect_ratio_hw);
 }
 
+
 void Update_Video_Menu()
 {
 	SDL_Flip(sdl_screen);
 }
 
-
 void Update_Video_Ingame(uint16_t* __restrict__ pixels)
 {
-	uint_fast16_t y, pitch;
-	uint16_t *source_graph, *src, *dst;
-
-	source_graph = (uint16_t* __restrict__)pixels;
-
-	SDL_LockSurface(sdl_screen);
-	
-	pitch = sdl_screen->w;
-	src = (uint16_t* __restrict__)source_graph;
-	dst = (uint16_t* __restrict__)sdl_screen->pixels
-		+ ((sdl_screen->w - INTERNAL_GBA_WIDTH) / 4) * sizeof(uint16_t)
-		+ ((sdl_screen->h - INTERNAL_GBA_HEIGHT) / 2) * pitch;
-	for (y = 0; y < INTERNAL_GBA_HEIGHT; y++)
-	{
-		memmove(dst, src, INTERNAL_GBA_WIDTH * sizeof(uint16_t));
-		src += 256;
-		dst += pitch;
-	}
-	SDL_UnlockSurface(sdl_screen);	
-	SDL_Flip(sdl_screen);
+	SDL_Flip(sdl_screen);	
 }

@@ -29,7 +29,12 @@ extern void SaveState(char* path, uint_fast8_t state);
 
 static uint8_t selectpressed = 0;
 static uint8_t save_slot = 0;
+
+#ifdef IPU_SCALING_NONATIVE
+static const int8_t upscalers_available = 1
+#else
 static const int8_t upscalers_available = 2
+#endif
 #ifdef SCALE2X_UPSCALER
 +1
 #endif
@@ -82,7 +87,11 @@ static void config_load()
 		option.config_buttons[11] = 308;
 
 		/* Set default to keep aspect */
+		#ifdef IPU_SCALING_NONATIVE
+		option.fullscreen = 1;
+		#else
 		option.fullscreen = 2;
+		#endif
 	}
 }
 
@@ -334,6 +343,8 @@ void Menu()
     
 	/* Save eeprom settings each time we bring up the menu */
 	EEPROM_Menu(0);
+	
+	if (option.fullscreen < 0 || option.fullscreen > upscalers_available) option.fullscreen = 0;
     
     while (((currentselection != 1) && (currentselection != 6)) || (!pressed))
     {
@@ -356,6 +367,32 @@ void Menu()
 		if (currentselection == 3) print_string(text, TextRed, 0, 5, 85, (uint16_t*) backbuffer->pixels);
 		else print_string(text, TextWhite, 0, 5, 85, (uint16_t*) backbuffer->pixels);
 		
+		#ifdef IPU_SCALING_NONATIVE
+        if (currentselection == 4)
+        {
+			switch(option.fullscreen)
+			{
+				case 0:
+					print_string("Scaling : Stretched", TextRed, 0, 5, 105, (uint16_t*) backbuffer->pixels);
+				break;
+				case 1:
+					print_string("Scaling : Keep scaled", TextRed, 0, 5, 105, (uint16_t*) backbuffer->pixels);
+				break;
+			}
+        }
+        else
+        {
+			switch(option.fullscreen)
+			{
+				case 0:
+					print_string("Scaling : Stretched", TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
+				break;
+				case 1:
+					print_string("Scaling : Keep scaled", TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
+				break;
+			}
+        }
+		#else
         if (currentselection == 4)
         {
 			switch(option.fullscreen)
@@ -392,6 +429,7 @@ void Menu()
 				break;
 			}
         }
+        #endif
 
 		if (currentselection == 5) print_string("Input remapping", TextRed, 0, 5, 125, (uint16_t*) backbuffer->pixels);
 		else print_string("Input remapping", TextWhite, 0, 5, 125, (uint16_t*) backbuffer->pixels);
