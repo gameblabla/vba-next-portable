@@ -65,10 +65,10 @@ static void config_load()
 	else
 	{
 		/* Default mapping for Horizontal */
-		option.config_buttons[0] = 273;
-		option.config_buttons[1] = 275;
-		option.config_buttons[2] = 274;
-		option.config_buttons[3] = 276;
+		option.config_buttons[0] = SDLK_UP;
+		option.config_buttons[1] = SDLK_DOWN;
+		option.config_buttons[2] = SDLK_LEFT;
+		option.config_buttons[3] = SDLK_RIGHT;
 		
 		option.config_buttons[4] = SDLK_LCTRL;
 		option.config_buttons[5] = SDLK_LALT;
