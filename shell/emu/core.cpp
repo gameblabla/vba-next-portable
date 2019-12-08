@@ -473,6 +473,10 @@ int main(int argc, char* argv[])
 
 	snprintf(GameName_emu, sizeof(GameName_emu), "%s", basename(argv[1]));
 	
+	/* Init_Configuration also takes care of EEPROM saves so execute it after the game has been loaded in memory. */
+	Init_Configuration();
+	Init_Video();
+	
 	vbanext_init();
 #if USE_FRAME_SKIP
 	SetFrameskip(get_frameskip_code());
@@ -485,10 +489,6 @@ int main(int argc, char* argv[])
 	}
 	gba_init();
 	
-	/* Init_Configuration also takes care of EEPROM saves so execute it after the game has been loaded in memory. */
-	Init_Configuration();
-	
-	Init_Video();
 	Audio_Init();
 	
 	while(!done)
