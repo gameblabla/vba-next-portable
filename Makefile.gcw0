@@ -1,0 +1,57 @@
+PRGNAME     = vbanext.elf
+CC			= /opt/gcw0-toolchain-static/bin/mipsel-linux-gcc
+CXX			= /opt/gcw0-toolchain-static/bin/mipsel-linux-gcc
+
+#### Configuration
+
+# Possible values : retrostone, rs97, rs90
+PORT = gcw0
+# Possible values : alsa, oss, portaudio
+SOUND_ENGINE = alsa
+
+PROFILE = 0
+
+#### End of Configuration
+
+GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
+
+INCLUDES	= -Ilibretro-common/include -Isrc
+INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers -Ishell/input/sdl -Ishell/fonts -Ishell/menu
+
+DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
+DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\"
+# Extra defines
+DEFINES		+= -DUSE_TWEAKS -DENABLE_JOYSTICKCODE
+
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -mips32r2 -fno-PIC -mno-abicalls -flto -fwhole-program -fno-common $(INCLUDES) $(DEFINES)
+ifeq ($(PROFILE), YES)
+CFLAGS 		+= -fprofile-generate=/media/data/local/home/
+else ifeq ($(PROFILE), APPLY)
+CFLAGS		+= -fprofile-use -fbranch-probabilities
+endif
+
+CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
+LDFLAGS     = -lc -lgcc -lm -lSDL -lasound -lz -flto -s
+ifeq ($(PROFILE), YES)
+LDFLAGS 		+= -lgcov
+endif
+
+# Files to be compiled
+SRCDIR 		=  ./src ./libretro-common ./shell ./shell/scalers ./shell/emu ./shell/menu
+SRCDIR		+= ./shell/input/sdl/ ./shell/video/$(PORT) ./shell/audio/$(SOUND_ENGINE)
+VPATH		= $(SRCDIR)
+SRC_C		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
+SRC_CPP		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
+OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
+OBJ_CPP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CPP)))
+OBJS		= $(OBJ_C) $(OBJ_CPP)
+
+# Rules to make executable
+$(PRGNAME): $(OBJS)  
+	$(CC) $(CFLAGS) -std=gnu99 -o $(PRGNAME) $^ $(LDFLAGS)
+	
+$(OBJ_CPP) : %.o : %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(PRGNAME)$(EXESUFFIX) *.o

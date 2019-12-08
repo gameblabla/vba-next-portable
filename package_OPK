@@ -1,0 +1,32 @@
+#!/bin/sh
+
+mkdir -p opk
+cp ./vbanext.elf opk/vbanext.elf
+cp ./vbanext.png opk/vbanext.png
+cp ./docs/LICENSE opk/COPYING
+
+# https://unix.stackexchange.com/questions/219268/how-to-add-new-lines-when-using-echo
+print()
+	case    ${IFS- } in
+	(\ *)   printf  %b\\n "$*";;
+	(*)     IFS=\ $IFS
+	printf  %b\\n "$*"
+	IFS=${IFS#?}
+esac
+
+# Create GmenuNx entry file plus other things
+
+print '[Desktop Entry]
+Type=Application
+Name=VBA Next
+Comment=GBA emulator
+Exec=vbanext.elf %f
+Icon=vbanext
+Terminal=false
+Type=Application
+Categories=emulators;
+X-OD-NeedsDownscaling=true' > opk/default."$1".desktop
+
+mksquashfs ./opk vbanext_"$1".opk -all-root -noappend -no-exports -no-xattrs
+
+rm -r opk
