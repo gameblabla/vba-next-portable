@@ -98,7 +98,17 @@ inline static long min(long p, long q) { return p < q ? p : q; }
 uint8_t *rom = 0;
 uint8_t *bios = 0;
 uint8_t *vram = 0;
+
+#ifdef INTERNAL_BUFFER_GBA
 uint16_t *pix = 0;
+#else
+#include <SDL/SDL.h>
+extern uint16_t* pix;
+extern SDL_Surface *sdl_screen;
+#define DRAW_UNLOCK SDL_UnlockSurface(sdl_screen);
+#define DRAW_LOCK SDL_LockSurface(sdl_screen);
+#endif
+
 uint8_t *oam = 0;
 uint8_t *ioMem = 0;
 uint8_t *internalRAM = 0;
@@ -8908,7 +8918,7 @@ unsigned CPUWriteState(uint8_t* data, unsigned size)
 	utilWriteMem(data, workRAM, 0x40000);
 	utilWriteMem(data, vram, 0x20000);
 	utilWriteMem(data, oam, 0x400);
-	utilWriteMem(data, pix, 4 * PIX_BUFFER_SCREEN_WIDTH * 160);
+	utilWriteMem(data, pix, 2 * PIX_BUFFER_SCREEN_WIDTH * 160);
 	utilWriteMem(data, ioMem, 0x400);
 
 	eepromSaveGameMem(data);
@@ -9101,10 +9111,12 @@ void CPUCleanUp (void)
 		bios = NULL;
 	}
 
+#ifdef INTERNAL_BUFFER_GBA
 	if(pix != NULL) {
 		memalign_free(pix);
 		pix = NULL;
 	}
+#endif
 
 	if(oam != NULL) {
 		memalign_free(oam);
@@ -9133,7 +9145,9 @@ bool CPUSetupBuffers()
 	paletteRAM = (uint8_t *)memalign_alloc_aligned(0x400);
 	vram = (uint8_t *)memalign_alloc_aligned(0x20000);
 	oam = (uint8_t *)memalign_alloc_aligned(0x400);
-	pix = (uint16_t *)memalign_alloc_aligned(4 * PIX_BUFFER_SCREEN_WIDTH * 160);
+	#ifdef INTERNAL_BUFFER_GBA
+	pix = (uint16_t *)memalign_alloc_aligned(2 * PIX_BUFFER_SCREEN_WIDTH * 160);
+	#endif
 	ioMem = (uint8_t *)memalign_alloc_aligned(0x400);
 
 	memset(rom, 0, 0x2000000);
@@ -9143,7 +9157,7 @@ bool CPUSetupBuffers()
 	memset(paletteRAM, 1, 0x400);
 	memset(vram, 1, 0x20000);
 	memset(oam, 1, 0x400);
-	memset(pix, 1, 4 * PIX_BUFFER_SCREEN_WIDTH * 160);
+	memset(pix, 1, 2 * PIX_BUFFER_SCREEN_WIDTH * 160);
 	memset(ioMem, 1, 0x400);
 
 	if(rom == NULL || workRAM == NULL || bios == NULL ||
@@ -9258,6 +9272,7 @@ int CPULoadRom(char * file)
 			rom = NULL;
 			memalign_free(workRAM);
 			workRAM = NULL;
+			printf("Can't load\n");
 			return 0;
 		}
 	}
@@ -11633,8 +11648,14 @@ static void postRender() {
 }
 
 template<int renderer_idx>
-renderfunc_t GetRenderFunc(int mode, int type) {
-	switch((mode << 4) | type) {
+renderfunc_t GetRenderFunc(int mode, int type) 
+{
+	#ifndef INTERNAL_BUFFER_GBA
+	DRAW_LOCK
+	#endif
+	
+	switch((mode << 4) | type) 
+	{
 		case 0x00: return mode0RenderLine<renderer_idx>;
 		case 0x01: return mode0RenderLineNoWindow<renderer_idx>;
 		case 0x02: return mode0RenderLineAll<renderer_idx>;
@@ -11655,6 +11676,10 @@ renderfunc_t GetRenderFunc(int mode, int type) {
 		case 0x52: return mode5RenderLineAll<renderer_idx>;
 		default: return NULL;
 	}
+	
+	#ifndef INTERNAL_BUFFER_GBA
+	DRAW_UNLOCK
+	#endif
 }
 
 bool CPUReadState(const uint8_t* data, unsigned size)
@@ -11692,7 +11717,7 @@ bool CPUReadState(const uint8_t* data, unsigned size)
 	utilReadMem(workRAM, data, 0x40000);
 	utilReadMem(vram, data, 0x20000);
 	utilReadMem(oam, data, 0x400);
-	utilReadMem(pix, data, 4 * PIX_BUFFER_SCREEN_WIDTH * 160);
+	utilReadMem(pix, data, 2 * PIX_BUFFER_SCREEN_WIDTH * 160);
 	utilReadMem(ioMem, data, 0x400);
 
 	eepromReadGameMem(data, version);
@@ -12712,7 +12737,7 @@ void CPUReset (void)
 	memset(&bus.reg[0], 0, sizeof(bus.reg));	// clean registers
 	memset(oam, 0, 0x400);				// clean OAM
 	memset(paletteRAM, 0, 0x400);		// clean palette
-	memset(pix, 0, 4 * 160 * 240);		// clean picture
+	memset(pix, 0, 2 * 160 * 240);		// clean picture
 	memset(vram, 0, 0x20000);			// clean vram
 	memset(ioMem, 0, 0x400);			// clean io memory
 
