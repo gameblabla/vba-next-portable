@@ -35,8 +35,6 @@ uint32_t Audio_Init()
 		fprintf(stderr, "unable to open PCM device: %s\n", snd_strerror(rc));
 		return 1;
 	}
-	
-	snd_pcm_nonblock(handle, 1);
 
 	/* Allocate a hardware parameters object. */
 	snd_pcm_hw_params_alloca(&params);
