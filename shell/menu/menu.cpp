@@ -14,6 +14,7 @@
 #include "video_blit.h"
 #include "config.h"
 #include "menu.h"
+#include "gba.h"
 
 t_config option;
 uint32_t emulator_state = 0;
@@ -87,10 +88,11 @@ static void config_load()
 		option.config_buttons[11] = 308;
 
 		/* Set default to keep aspect */
-		#ifdef IPU_SCALING_NONATIVE
-		option.fullscreen = 1;
-		#else
 		option.fullscreen = 2;
+		#if USE_FRAME_SKIP
+		option.frameskip = 5;
+		#else
+		option.frameskip = 1;
 		#endif
 	}
 }
@@ -331,6 +333,12 @@ static void Input_Remapping()
 	config_save();
 }
 
+#ifdef USE_FRAME_SKIP
+#define EXIT_NUMBER 7
+#else
+#define EXIT_NUMBER 6
+#endif
+
 void Menu()
 {
 	char text[50];
@@ -346,7 +354,7 @@ void Menu()
 	
 	if (option.fullscreen < 0 || option.fullscreen > upscalers_available) option.fullscreen = 0;
     
-    while (((currentselection != 1) && (currentselection != 6)) || (!pressed))
+    while (((currentselection != 1) && (currentselection != EXIT_NUMBER)) || (!pressed))
     {
         pressed = 0;
         
@@ -354,89 +362,64 @@ void Menu()
 
 		print_string("VBA-Next - Built on " __DATE__, TextWhite, 0, 5, 15, (uint16_t*) backbuffer->pixels);
 		
-		if (currentselection == 1) print_string("Continue", TextRed, 0, 5, 45, (uint16_t*) backbuffer->pixels);
-		else  print_string("Continue", TextWhite, 0, 5, 45, (uint16_t*) backbuffer->pixels);
+		print_string("Continue", (currentselection == 1) ? TextRed : TextWhite, 0, 5, 45, (uint16_t*) backbuffer->pixels);
 		
 		snprintf(text, sizeof(text), "Load State %d", save_slot);
 		
-		if (currentselection == 2) print_string(text, TextRed, 0, 5, 65, (uint16_t*) backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 65, (uint16_t*) backbuffer->pixels);
-		
+		print_string(text, (currentselection == 2) ? TextRed : TextWhite, 0, 5, 65, (uint16_t*) backbuffer->pixels);
+
 		snprintf(text, sizeof(text), "Save State %d", save_slot);
 		
-		if (currentselection == 3) print_string(text, TextRed, 0, 5, 85, (uint16_t*) backbuffer->pixels);
-		else print_string(text, TextWhite, 0, 5, 85, (uint16_t*) backbuffer->pixels);
+		print_string(text, (currentselection == 3) ? TextRed : TextWhite, 0, 5, 85, (uint16_t*) backbuffer->pixels);
 		
-		#ifdef IPU_SCALING_NONATIVE
-        if (currentselection == 4)
-        {
-			switch(option.fullscreen)
-			{
-				case 0:
-					print_string("Scaling : Stretched", TextRed, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-				case 1:
-					print_string("Scaling : Keep scaled", TextRed, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-			}
-        }
-        else
-        {
-			switch(option.fullscreen)
-			{
-				case 0:
-					print_string("Scaling : Stretched", TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-				case 1:
-					print_string("Scaling : Keep scaled", TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-			}
-        }
+
+        switch(option.fullscreen)
+		{
+			case 0:
+				print_string("Scaling : Stretched", (currentselection == 4) ? TextRed : TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
+			break;
+			case 1:
+				print_string("Scaling : Keep scaled", (currentselection == 4) ? TextRed : TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
+			break;
+			case 2:
+				print_string("Scaling : Native", (currentselection == 4) ? TextRed : TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
+			break;
+			case 3:
+				print_string("Scaling : EPX/Scale2x", (currentselection == 4) ? TextRed : TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
+			break;
+		}
+		print_string("Input remapping", (currentselection == 5) ? TextRed : TextWhite, 0, 5, 125, (uint16_t*) backbuffer->pixels);
+		
+		#ifdef USE_FRAME_SKIP
+        switch(option.frameskip)
+		{
+			case 0:
+				print_string("Frameskip : None", (currentselection == 6) ? TextRed : TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
+			break;
+			case 1:
+				print_string("Frameskip : 1/3", (currentselection == 6) ? TextRed : TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
+			break;
+			case 2:
+				print_string("Frameskip : 1/2", (currentselection == 6) ? TextRed : TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
+			break;
+			case 3:
+				print_string("Frameskip : 2", (currentselection == 6) ? TextRed : TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
+			break;
+			case 4:
+				print_string("Frameskip : 3", (currentselection == 6) ? TextRed : TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
+			break;
+			case 5:
+				print_string("Frameskip : 4", (currentselection == 6) ? TextRed : TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
+			break;
+			case 6:
+				print_string("Frameskip : Auto", (currentselection == 6) ? TextRed : TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
+			break;
+		}
+		print_string("Quit", (currentselection == EXIT_NUMBER) ? TextRed : TextWhite, 0, 5, 165, (uint16_t*) backbuffer->pixels);
 		#else
-        if (currentselection == 4)
-        {
-			switch(option.fullscreen)
-			{
-				case 0:
-					print_string("Scaling : Native", TextRed, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-				case 1:
-					print_string("Scaling : Stretched", TextRed, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-				case 2:
-					print_string("Scaling : Keep scaled", TextRed, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-				case 3:
-					print_string("Scaling : EPX/Scale2x", TextRed, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-			}
-        }
-        else
-        {
-			switch(option.fullscreen)
-			{
-				case 0:
-					print_string("Scaling : Native", TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-				case 1:
-					print_string("Scaling : Stretched", TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-				case 2:
-					print_string("Scaling : Keep scaled", TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-				case 3:
-					print_string("Scaling : EPX/Scale2x", TextWhite, 0, 5, 105, (uint16_t*) backbuffer->pixels);
-				break;
-			}
-        }
-        #endif
-
-		if (currentselection == 5) print_string("Input remapping", TextRed, 0, 5, 125, (uint16_t*) backbuffer->pixels);
-		else print_string("Input remapping", TextWhite, 0, 5, 125, (uint16_t*) backbuffer->pixels);
+		print_string("Quit", (currentselection == EXIT_NUMBER) ? TextRed : TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
+		#endif
 		
-		if (currentselection == 6) print_string("Quit", TextRed, 0, 5, 145, (uint16_t*) backbuffer->pixels);
-		else print_string("Quit", TextWhite, 0, 5, 145, (uint16_t*) backbuffer->pixels);
-
 		print_string("libretro fork by gameblabla", TextWhite, 0, 5, 205, (uint16_t*) backbuffer->pixels);
 		print_string("Credits: libretro, vbam authors", TextWhite, 0, 5, 225, (uint16_t*) backbuffer->pixels);
 
@@ -449,11 +432,11 @@ void Menu()
                     case SDLK_UP:
                         currentselection--;
                         if (currentselection == 0)
-                            currentselection = 6;
+                            currentselection = EXIT_NUMBER;
                         break;
                     case SDLK_DOWN:
                         currentselection++;
-                        if (currentselection == 7)
+                        if (currentselection == EXIT_NUMBER+1)
                             currentselection = 1;
                         break;
                     case SDLK_END:
@@ -478,11 +461,13 @@ void Menu()
 							if (option.fullscreen < 0)
 								option.fullscreen = upscalers_available;
 							break;
-							case 5:
-								option.orientation_settings--;
-								if (option.orientation_settings < 0)
-									option.orientation_settings = 2;
+							#ifdef USE_FRAME_SKIP
+							case 6:
+								option.frameskip--;
+								if (option.frameskip < 0)
+									option.frameskip = 6;
 							break;
+							#endif
                         }
                         break;
                     case SDLK_RIGHT:
@@ -499,11 +484,13 @@ void Menu()
                                 if (option.fullscreen > upscalers_available)
                                     option.fullscreen = 0;
 							break;
-							case 5:
-								option.orientation_settings++;
-								if (option.orientation_settings > 2)
-									option.orientation_settings = 0;
+							#ifdef USE_FRAME_SKIP
+							case 6:
+								option.frameskip++;
+								if (option.frameskip > 6)
+									option.frameskip = 0;
 							break;
+							#endif
                         }
                         break;
 					default:
@@ -512,7 +499,7 @@ void Menu()
             }
             else if (Event.type == SDL_QUIT)
             {
-				currentselection = 6;
+				currentselection = 7;
 				pressed = 1;
 			}
         }
@@ -555,14 +542,20 @@ void Menu()
     SDL_Flip(sdl_screen);
     #endif
     
-    if (currentselection == 6)
+    if (currentselection == EXIT_NUMBER)
     {
         done = 1;
+        // Make sure to also save when exiting VBA Next
+        config_save();
 	}
 	
 	/* Switch back to emulator core */
 	emulator_state = 0;
 	Set_Video_InGame();
+	
+	#ifdef USE_FRAME_SKIP
+	SetFrameskip(get_frameskip_code());
+	#endif
 }
 
 static void Cleanup(void)
