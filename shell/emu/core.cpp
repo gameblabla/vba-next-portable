@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <libgen.h>
+#include <sys/time.h>
 
 #include "system.h"
 #include "port.h"
@@ -244,7 +245,7 @@ static void load_image_preferences (void)
 }
 
 #if USE_FRAME_SKIP
-static int get_frameskip_code()
+int get_frameskip_code()
 {
 	/*if (strcmp(var.value, "1/3") == 0) return 0x13;
 	if (strcmp(var.value, "1/2") == 0) return 0x12;
@@ -252,7 +253,28 @@ static int get_frameskip_code()
 	if (strcmp(var.value, "2") == 0) return 0x2;
 	if (strcmp(var.value, "3") == 0) return 0x3;
 	if (strcmp(var.value, "4") == 0) return 0x4;*/
-	return 0x13;
+	switch(option.frameskip)
+	{
+		case 1:
+			return 0x13;
+		break;
+		case 2:
+			return 0x12;
+		break;
+		case 3:
+			return 0x2;
+		break;
+		case 4:
+			return 0x3;
+		break;
+		case 5:
+			return 0x4;
+		break;
+		default:
+			return 0x0;
+		break;
+	}
+	return 0x0;
 }
 #endif
 
@@ -285,7 +307,7 @@ static void gba_init(void)
    free(state_buf);
 
 #if USE_FRAME_SKIP
-   SetFrameskip(get_frameskip_code());
+	SetFrameskip(get_frameskip_code());
 #endif
 }
 
@@ -310,16 +332,56 @@ static unsigned has_frame;
 #endif
 */
 
+#ifdef USE_FRAME_SKIP
+static uint32_t Timer_Read(void) 
+{
+	/* Timing. */
+	struct timeval tval;
+  	gettimeofday(&tval, 0);
+	return (((tval.tv_sec*1000000) + (tval.tv_usec)));
+}
+static long lastTick = 0, newTick;
+static uint32_t video_frames = 0, FPS = 60, FrameSkip = 0;
+#endif
+
 void vbanext_run(void)
 {
    joy = update_input();
 
    has_frame = 0;
    UpdateJoypad();
+   
    do
    {
       CPULoop();
    }while (!has_frame);
+   
+#ifdef USE_FRAME_SKIP
+	if (option.frameskip == 6)
+	{
+		video_frames++;
+		newTick = Timer_Read();
+		if ( (newTick) - (lastTick) > 1000000) 
+		{
+			FPS = video_frames;
+			video_frames = 0;
+			lastTick = newTick;
+			
+			if (FPS > 58)
+			{
+				FrameSkip = 0;
+				SetFrameskip(0);
+			}
+			else
+			{
+				if (FPS > 44) SetFrameskip(0x1);
+				else if (FPS > 29) SetFrameskip(0x2);
+				else if (FPS > 14) SetFrameskip(0x3);
+				else SetFrameskip(0x4);
+			}
+		}
+	}
+#endif
 }
 
 void vbanext_cheat_reset(void)

@@ -36,7 +36,7 @@ uint32_t width_of_surface;
 uint16_t* Draw_to_Virtual_Screen;
 uint_fast8_t aspect_ratio_hw = 0;
 
-#define FLAGS_SDL SDL_HWSURFACE 
+#define FLAGS_SDL SDL_HWSURFACE
 
 #ifndef SDL_TRIPLEBUF
 #define SDL_TRIPLEBUF SDL_DOUBLEBUF
@@ -124,21 +124,9 @@ void Set_Video_InGame()
 {
 	if (sdl_screen && SDL_MUSTLOCK(sdl_screen)) SDL_UnlockSurface(sdl_screen);
 		
-	switch(option.fullscreen) 
-	{
-		/* Stretched, fullscreen*/
-		case 0:
-			set_keep_aspect_ratio(0);
-			sdl_screen = SDL_SetVideoMode(240, 160, 16, FLAGS_SDL);
-			width_of_surface = INTERNAL_GBA_WIDTH;
-		break;
-		/* Keep Aspect Ratio */
-		case 1:
-			set_keep_aspect_ratio(1);
-			sdl_screen = SDL_SetVideoMode(240, 160, 16, FLAGS_SDL);
-			width_of_surface = INTERNAL_GBA_WIDTH;
-		break;
-    }
+	sdl_screen = SDL_SetVideoMode(240, 160, 16, FLAGS_SDL);
+	width_of_surface = INTERNAL_GBA_WIDTH;
+	set_keep_aspect_ratio(option.fullscreen);
     
 	if (SDL_MUSTLOCK(sdl_screen)) SDL_LockSurface(sdl_screen);
 }

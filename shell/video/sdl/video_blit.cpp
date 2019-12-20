@@ -96,7 +96,14 @@ void Update_Video_Ingame(uint16_t* __restrict__ pixels)
 	
 	switch(option.fullscreen) 
 	{
+		// Fullscreen
 		case 0:
+			gba_upscale((uint16_t __restrict__*)sdl_screen->pixels, (uint16_t __restrict__*)source_graph, 240, 160, 512, sdl_screen->pitch);
+		break;
+		case 1:
+			gba_upscale_aspect((uint16_t __restrict__*)sdl_screen->pixels + (480*8), (uint16_t __restrict__*)source_graph, 240, 160, 512, sdl_screen->pitch);
+		break;
+		case 2:
 			pitch = HOST_WIDTH_RESOLUTION;
 			src = (uint16_t* __restrict__)source_graph;
 			dst = (uint16_t* __restrict__)sdl_screen->pixels
@@ -108,13 +115,6 @@ void Update_Video_Ingame(uint16_t* __restrict__ pixels)
 				src += PIX_BUFFER_SCREEN_WIDTH;
 				dst += pitch;
 			}
-		break;
-		// Fullscreen
-		case 1:
-			gba_upscale((uint16_t __restrict__*)sdl_screen->pixels, (uint16_t __restrict__*)source_graph, 240, 160, 512, sdl_screen->pitch);
-		break;
-		case 2:
-			gba_upscale_aspect((uint16_t __restrict__*)sdl_screen->pixels + (480*8), (uint16_t __restrict__*)source_graph, 240, 160, 512, sdl_screen->pitch);
 		break;
 		// Hqx
 		case 3:

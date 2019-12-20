@@ -9272,7 +9272,6 @@ int CPULoadRom(char * file)
 			rom = NULL;
 			memalign_free(workRAM);
 			workRAM = NULL;
-			printf("Can't load\n");
 			return 0;
 		}
 	}

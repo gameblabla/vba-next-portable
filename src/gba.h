@@ -114,6 +114,7 @@ extern void UpdateJoypad(void);
 extern void CPUCheckDMA(int,int);
 #if USE_FRAME_SKIP
 extern void SetFrameskip(int);
+extern int get_frameskip_code();
 #endif
 
 #if THREADED_RENDERER
