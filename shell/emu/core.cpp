@@ -45,7 +45,7 @@ static uint_fast8_t scan_area(const uint8_t *data, unsigned size)
    return 0;
 }
 
-static void adjust_save_ram()
+void adjust_save_ram()
 {
    if (scan_area(libretro_save_buf, 512) &&
          !scan_area(libretro_save_buf + 512, sizeof(libretro_save_buf) - 512))
@@ -78,7 +78,7 @@ static void adjust_save_ram()
 void vbanext_init(void)
 {
    memset(libretro_save_buf, 0xff, sizeof(libretro_save_buf));
-   adjust_save_ram();
+   //adjust_save_ram();
 
 #if THREADED_RENDERER
 	ThreadedRendererStart();
@@ -381,6 +381,8 @@ void vbanext_run(void)
 			}
 		}
 	}
+#elif defined(FORCE_FRAMESKIP)
+	SetFrameskip(0x4);
 #endif
 }
 
@@ -534,12 +536,8 @@ int main(int argc, char* argv[])
 	}
 
 	snprintf(GameName_emu, sizeof(GameName_emu), "%s", basename(argv[1]));
-	
-	/* Init_Configuration also takes care of EEPROM saves so execute it after the game has been loaded in memory. */
-	Init_Configuration();
 	Init_Video();
 	
-	vbanext_init();
 #if USE_FRAME_SKIP
 	SetFrameskip(get_frameskip_code());
 #endif
@@ -550,6 +548,10 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	gba_init();
+	
+	vbanext_init();
+	/* Init_Configuration also takes care of EEPROM saves so execute it after the game has been loaded in memory. */
+	Init_Configuration();
 	
 	Audio_Init();
 	

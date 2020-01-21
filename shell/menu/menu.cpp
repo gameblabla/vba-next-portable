@@ -48,10 +48,12 @@ static void SaveState_Menu(uint_fast8_t load_mode, uint_fast8_t slot)
 	SaveState(tmp,load_mode);
 }
 
-static void EEPROM_Menu(uint_fast8_t load_mode)
+void EEPROM_Menu(uint_fast8_t load_mode)
 {
+	extern void adjust_save_ram();
 	char tmp[512];
 	snprintf(tmp, sizeof(tmp), "%s/%s.eps", eeprom_path, GameName_emu);
+	adjust_save_ram();
 	EEPROM_file(tmp,load_mode);
 }
 

@@ -25,6 +25,9 @@ int32_t update_input(void)
 			case SDL_KEYDOWN:
 				switch(event.key.keysym.sym)
 				{
+#ifdef GKD350_BUG_INPUT
+					case SDLK_LSHIFT:
+#endif
 					case SDLK_END:
 					case SDLK_RCTRL:
 						emulator_state = 1;

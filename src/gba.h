@@ -112,7 +112,7 @@ extern void CPUReset (void);
 extern void CPULoop(void);
 extern void UpdateJoypad(void);
 extern void CPUCheckDMA(int,int);
-#if USE_FRAME_SKIP
+#if USE_FRAME_SKIP || FORCE_FRAMESKIP
 extern void SetFrameskip(int);
 extern int get_frameskip_code();
 #endif

@@ -30,6 +30,10 @@
 #include "config.h"
 #include "globals.h"
 
+#ifdef ENABLE_JOYSTICKCODE
+static SDL_Joystick *sdl_joy;
+#endif
+
 SDL_Surface *sdl_screen, *backbuffer;
 
 uint32_t width_of_surface;
@@ -37,11 +41,21 @@ uint16_t* Draw_to_Virtual_Screen;
 
 void Init_Video()
 {
-	SDL_Init( SDL_INIT_VIDEO );
+	#ifdef ENABLE_JOYSTICKCODE
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
+	
+	if (SDL_NumJoysticks() > 0)
+	{
+		sdl_joy = SDL_JoystickOpen(0);
+		SDL_JoystickEventState(SDL_ENABLE);
+	}
+	#else
+	SDL_Init(SDL_INIT_VIDEO);
+	#endif
 	
 	SDL_ShowCursor(0);
 	
-	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
+	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);
 	
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0,0,0,0);
 	
@@ -71,6 +85,9 @@ void Set_Video_InGame()
 
 void Close_Video()
 {
+	#ifdef ENABLE_JOYSTICKCODE
+	if (SDL_JoystickOpened(0)) SDL_JoystickClose(sdl_joy);
+	#endif
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
 	if (backbuffer) SDL_FreeSurface(backbuffer);
 	SDL_Quit();

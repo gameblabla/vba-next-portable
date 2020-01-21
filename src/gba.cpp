@@ -65,7 +65,7 @@ static size_t MappedFileSize;
 // Used in R_WIN_* to indicate whether color effects are enabled
 #define LayerMask_SFX  (1 << 5)
 
-#if USE_FRAME_SKIP
+#if USE_FRAME_SKIP || FORCE_FRAMESKIP
 
 int fs_count = 0;
 int fs_type = 0;
@@ -13196,7 +13196,7 @@ updateLoop:
 		            	systemDrawScreen();
 #endif
 
-#if USE_FRAME_SKIP
+#if USE_FRAME_SKIP || FORCE_FRAMESKIP
 						++fs_count;
 
 						if(fs_type_b == 0) {
@@ -13217,7 +13217,7 @@ updateLoop:
 				}
 				else
 				{
-#if USE_FRAME_SKIP
+#if USE_FRAME_SKIP || FORCE_FRAMESKIP
 					if(fs_draw) {
 #endif
 #if THREADED_RENDERER
@@ -13236,7 +13236,7 @@ updateLoop:
 					
 						GetRenderFunc<0>(renderfunc_mode, renderfunc_type)();
 #endif
-#if USE_FRAME_SKIP					
+#if USE_FRAME_SKIP || FORCE_FRAMESKIP				
 					}
 #endif
 
