@@ -5,7 +5,7 @@ CXX			= /opt/gcw0-toolchain/bin/mipsel-linux-gcc
 #### Configuration
 
 # Possible values : retrostone, rs97, rs90
-PORT = gcw0
+PORT = sdl
 # Possible values : alsa, oss, portaudio
 SOUND_ENGINE = alsa
 
@@ -18,16 +18,16 @@ GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 INCLUDES	= -Ilibretro-common/include -Isrc
 INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers -Ishell/input/sdl -Ishell/fonts -Ishell/menu
 
-DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
+DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND -DINTERNAL_BUFFER_GBA
 DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\"
 # Extra defines
-DEFINES		+= -DUSE_TWEAKS -DENABLE_JOYSTICKCODE -DIPU_SCALING_NONATIVE -DFORCE_FRAMESKIP
+DEFINES		+= -DUSE_TWEAKS -DENABLE_JOYSTICKCODE -DGKD350_BUG_INPUT
 
 #-fdata-sections -ffunction-sections
 CFLAGS		= -Ofast -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -mips32r2 -fno-PIC -mno-abicalls -flto -fuse-linker-plugin -fno-common $(INCLUDES) $(DEFINES)
 CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/media/data/local/home/vbanext_gcda
+CFLAGS 		+= -fprofile-generate=/media/data/local/home/
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif

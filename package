@@ -1,11 +1,9 @@
 #!/bin/sh
 
-mkdir -p ipkg/home/retrofw/emus/vbanext
-mkdir -p ipkg/home/retrofw/apps/gmenu2x/sections/emulators
-cp ./vbanext.elf ipkg/home/retrofw/emus/vbanext/vbanext.elf
-cp ./vbanext.png ipkg/home/retrofw/emus/vbanext/vbanext.png
-
-cd ipkg
+mkdir -p opk
+cp ./vbanext.elf opk/vbanext.elf
+cp ./vbanext.png opk/vbanext.png
+cp ./LICENSE opk/COPYING
 
 # https://unix.stackexchange.com/questions/219268/how-to-add-new-lines-when-using-echo
 print()
@@ -18,29 +16,17 @@ esac
 
 # Create GmenuNx entry file plus other things
 
-print 'Package: vba-next
-Version: 20190614
-Description: GBA emulator
-Section: emus
-Priority: optional
-Maintainer: gameblabla
-Architecture: mipsel
-Homepage: https://github.com/gameblabla/vba-next-portable
-Depends:
-Source: https://github.com/gameblabla/vba-next-portable' > control
+print '[Desktop Entry]
+Type=Application
+Name=VBA Next
+Comment=GBA emulator
+Exec=vbanext.elf %f
+Icon=vbanext
+Terminal=false
+Type=Application
+Categories=emulators;
+X-OD-NeedsDownscaling=true' > opk/default."$1".desktop
 
-print '2.0' > debian-binary
+mksquashfs ./opk vbanext_"$1".opk -all-root -noappend -no-exports -no-xattrs
 
-print 'title=VBA Next
-description=GBA Emulator
-exec=/home/retrofw/emus/vbanext/vbanext
-clock=600
-selectordir=/home/retrofw/roms
-selectorfilter=.gba' > home/retrofw/apps/gmenu2x/sections/emulators/vbanext
-
-tar -czvf control.tar.gz control --owner=0 --group=0
-tar -czvf data.tar.gz home --owner=0 --group=0
-ar rv ../vba-next_retrofw_POC.ipk control.tar.gz data.tar.gz debian-binary
-
-cd ..
-rm -r ipkg
+rm -r opk
