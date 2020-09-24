@@ -11976,7 +11976,6 @@ void doDMA(uint32_t &s, uint32_t &d, uint32_t si, uint32_t di, uint32_t c, int t
 				cpuDmaLast = CPUReadHalfWord(s);
 				CPUWriteHalfWord(d, cpuDmaLast);
 				cpuDmaLast |= cpuDmaLast << 16;
-				CPUWriteHalfWord(d, CPUReadHalfWord(s));
 				d += di;
 				s += si;
 				c--;
