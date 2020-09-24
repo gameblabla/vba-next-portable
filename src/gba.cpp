@@ -1390,7 +1390,8 @@ static inline int16_t fast_cos(uint8_t val)
 
 static void BIOS_ArcTan (void)
 {
-	s32 a =  -(((s32)(bus.reg[0].I*bus.reg[0].I)) >> 14);
+	s32 i = bus.reg[0].I;
+	s32 a =  -((i * i) >> 14);
 	s32 b = ((0xA9 * a) >> 14) + 0x390;
 	b = ((b * a) >> 14) + 0x91C;
 	b = ((b * a) >> 14) + 0xFB6;
@@ -1398,8 +1399,9 @@ static void BIOS_ArcTan (void)
 	b = ((b * a) >> 14) + 0x2081;
 	b = ((b * a) >> 14) + 0x3651;
 	b = ((b * a) >> 14) + 0xA2F9;
-	a = ((s32)bus.reg[0].I * b) >> 16;
-	bus.reg[0].I = a;
+	bus.reg[0].I = (i * b) >> 16;
+	bus.reg[1].I = a;
+	bus.reg[3].I = b;
 }
 
 static void BIOS_Div (void)
@@ -1450,6 +1452,7 @@ static void BIOS_ArcTan2 (void)
 		}
 	}
 	bus.reg[0].I = res;
+	bus.reg[3].I = 0x170;
 }
 
 static void BIOS_BitUnPack (void)
