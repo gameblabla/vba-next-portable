@@ -340,7 +340,7 @@ static void Input_Remapping()
 }
 
 #ifdef USE_FRAME_SKIP
-#define EXIT_NUMBER 7
+#define EXIT_NUMBER 7-IPU_OFFSET
 #else
 #define EXIT_NUMBER 6-IPU_OFFSET
 #endif
