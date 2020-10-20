@@ -8939,7 +8939,6 @@ unsigned CPUWriteState(uint8_t* data, unsigned size)
 	utilWriteMem(data, workRAM, 0x40000);
 	utilWriteMem(data, vram, 0x20000);
 	utilWriteMem(data, oam, 0x400);
-	utilWriteMem(data, pix, 2 * PIX_BUFFER_SCREEN_WIDTH * 160);
 	utilWriteMem(data, ioMem, 0x400);
 
 	eepromSaveGameMem(data);
@@ -11737,7 +11736,6 @@ bool CPUReadState(const uint8_t* data, unsigned size)
 	utilReadMem(workRAM, data, 0x40000);
 	utilReadMem(vram, data, 0x20000);
 	utilReadMem(oam, data, 0x400);
-	utilReadMem(pix, data, 2 * PIX_BUFFER_SCREEN_WIDTH * 160);
 	utilReadMem(ioMem, data, 0x400);
 
 	eepromReadGameMem(data, version);
