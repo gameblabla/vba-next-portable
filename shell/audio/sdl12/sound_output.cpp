@@ -133,7 +133,7 @@ uint32_t Audio_Init()
 void Audio_Write(int16_t* buffer, uint32_t buffer_size)
 {
 	SDL_LockAudio();
-	sdl_write_buffer((uint8_t*)buffer, buffer_size);
+	sdl_write_buffer((uint8_t*)buffer, buffer_size * 4);
 	SDL_UnlockAudio();
 }
 
