@@ -14,7 +14,7 @@
  * for IPU activated devices because it allows us to directly draw to the screen instead of a 
  * secondary buffer. Use 256 as before on other platforms. */
 
-#ifdef IPU_SCALING_NONATIVE
+#ifdef IPU_SCALE
 #define PIX_BUFFER_SCREEN_WIDTH 240
 #else
 #define PIX_BUFFER_SCREEN_WIDTH 256
