@@ -382,7 +382,7 @@ void vbanext_run(void)
 		}
 	}
 #elif defined(FORCE_FRAMESKIP)
-	SetFrameskip(0x4);
+	SetFrameskip(FORCE_FRAMESKIP);
 #endif
 }
 
