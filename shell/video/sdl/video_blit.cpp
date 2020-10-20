@@ -34,6 +34,10 @@
 static SDL_Joystick *sdl_joy;
 #endif
 
+#ifndef SDL_TRIPLEBUF
+#define SDL_TRIPLEBUF SDL_DOUBLEBUF
+#endif
+
 SDL_Surface *sdl_screen, *backbuffer;
 
 uint32_t width_of_surface;
