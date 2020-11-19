@@ -542,7 +542,7 @@ int main(int argc, char* argv[])
 	SetFrameskip(get_frameskip_code());
 #endif
 	ret = CPULoadRom(argv[1]);
-	if (ret)
+	if (ret < 1)
 	{
 		printf("Could not load ROM in memory\n");
 		return 0;
