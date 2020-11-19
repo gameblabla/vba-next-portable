@@ -30,6 +30,10 @@
 #include "config.h"
 #include "globals.h"
 
+#ifndef VIRTUAL_SURFACE
+#error "VIRTUAL_SURFACE needs to be defined. Redo the compilation"
+#endif
+
 SDL_Surface *sdl_screen, *backbuffer;
 
 uint32_t width_of_surface;
@@ -63,7 +67,6 @@ void Set_Video_InGame()
 	{
         default:
 			if (sdl_screen->w != HOST_WIDTH_RESOLUTION) sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
-			//Draw_to_Virtual_Screen = (uint16_t*)pix;
 			width_of_surface = INTERNAL_GBA_WIDTH;
         break;
     }
@@ -82,14 +85,14 @@ void Update_Video_Menu()
 }
 
 
-void Update_Video_Ingame(uint16_t* __restrict__ pixels)
+void Update_Video_Ingame(void)
 {
 	uint32_t internal_width, internal_height, keep_aspect_width, keep_aspect_height;
 	uint16_t*  source_graph;
 
 	internal_width = INTERNAL_GBA_WIDTH;
 	internal_height = INTERNAL_GBA_HEIGHT;
-	source_graph = (uint16_t* __restrict__)pixels;
+	source_graph = (uint16_t* __restrict__)pix;
 	
 	keep_aspect_width = ((HOST_HEIGHT_RESOLUTION / INTERNAL_GBA_HEIGHT) * INTERNAL_GBA_WIDTH) + HOST_WIDTH_RESOLUTION/4;
 	if (keep_aspect_width > HOST_WIDTH_RESOLUTION) keep_aspect_width -= HOST_WIDTH_RESOLUTION/4;

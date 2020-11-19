@@ -22,6 +22,6 @@ void Set_Video_Menu();
 void Set_Video_InGame();
 void Close_Video();
 void Update_Video_Menu();
-void Update_Video_Ingame(uint16_t* __restrict__ pixels);
+void Update_Video_Ingame(void);
 
 #endif

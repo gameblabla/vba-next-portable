@@ -31,18 +31,12 @@
 #include "globals.h"
 
 SDL_Surface *sdl_screen, *backbuffer;
-#ifdef INTERNAL_BUFFER_GBA
-SDL_Surface *int_gba;
-#endif
-
-uint32_t width_of_surface;
-uint16_t* Draw_to_Virtual_Screen;
-
 #ifndef SDL_TRIPLEBUF
+#warning "Triple buffering not available : Reverting back to Double buffering"
 #define SDL_TRIPLEBUF SDL_DOUBLEBUF
 #endif
 
-#ifdef INTERNAL_BUFFER_GBA
+#ifdef VIRTUAL_SURFACE
 #define FLAGS_SDL SDL_HWSURFACE | SDL_TRIPLEBUF
 #else
 #define FLAGS_SDL SDL_HWSURFACE
@@ -52,12 +46,9 @@ uint16_t* Draw_to_Virtual_Screen;
 static SDL_Joystick *sdl_joy;
 #endif
 
-#if !IPU_SCALE || INTERNAL_BUFFER_GBA
-#error "GCW0 port requires IPU_SCALE to be defined and INTERNAL_BUFFER_GBA to be undefined"
+#if !IPU_SCALE
+#error "GCW0 port requires IPU_SCALE to be defined"
 #endif
-
-uint16_t* pix;
-
 
 void Init_Video()
 {
@@ -78,21 +69,7 @@ void Init_Video()
 	
 	sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, FLAGS_SDL);
 	backbuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, 0,0,0,0);
-#ifdef INTERNAL_BUFFER_GBA
-	int_gba = SDL_CreateRGBSurface(SDL_SWSURFACE, 240, 160, 16, 0,0,0,0);	
-#endif
-	
-	/* This will avoid having an internal buffer for VBA Next and draw directly to the screen instead.
-	 * This saves memory and CPU usage, especially on lower end devices. */
-
-#ifdef INTERNAL_BUFFER_GBA
-	pix = (uint16_t*) int_gba->pixels;
-#else
-	pix = (uint16_t*) sdl_screen->pixels;
-#endif
-
 	if (SDL_MUSTLOCK(sdl_screen)) SDL_LockSurface(sdl_screen);
-	
 	Set_Video_InGame();
 }
 
@@ -114,12 +91,11 @@ void Set_Video_InGame()
 	if (sdl_screen && SDL_MUSTLOCK(sdl_screen)) SDL_UnlockSurface(sdl_screen);
 		
 	sdl_screen = SDL_SetVideoMode(240, 160, 16, FLAGS_SDL);
-	width_of_surface = INTERNAL_GBA_WIDTH;
     
 	if (SDL_MUSTLOCK(sdl_screen)) SDL_LockSurface(sdl_screen);
 	
-	#ifndef INTERNAL_BUFFER_GBA
 	/* We must make sure to do that as otherwise, the memory address for sdl_screen->pixels can change after calling SDL_SetVideoMode again */
+	#ifndef VIRTUAL_SURFACE
 	pix = (uint16_t*) sdl_screen->pixels;
 	#endif
 }
@@ -129,8 +105,16 @@ void Close_Video()
 	#ifdef ENABLE_JOYSTICKCODE
 	if (SDL_JoystickOpened(0)) SDL_JoystickClose(sdl_joy);
 	#endif
-	if (sdl_screen) SDL_FreeSurface(sdl_screen);
-	if (backbuffer) SDL_FreeSurface(backbuffer);
+	if (sdl_screen)
+	{
+		SDL_FreeSurface(sdl_screen);
+		sdl_screen = NULL;
+	}
+	if (backbuffer)
+	{
+		SDL_FreeSurface(backbuffer);
+		backbuffer = NULL;
+	}
 	SDL_Quit();
 }
 
@@ -140,10 +124,14 @@ void Update_Video_Menu()
 	SDL_Flip(sdl_screen);
 }
 
-void Update_Video_Ingame(uint16_t* __restrict__ pixels)
+void Update_Video_Ingame(void)
 {
-#ifdef INTERNAL_BUFFER_GBA
-	SDL_BlitSurface(int_gba, NULL, sdl_screen, NULL);
+#ifdef VIRTUAL_SURFACE
+	if (SDL_LockSurface(sdl_screen) == 0)
+	{
+		memmove(sdl_screen->pixels, pix, (240*160)*2);
+		SDL_UnlockSurface(sdl_screen);
+	}
 #endif
 	SDL_Flip(sdl_screen);	
 }

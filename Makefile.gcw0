@@ -7,8 +7,8 @@ CXX			= /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
 # Possible values : retrostone, rs97, rs90
 PORT = gcw0
 # Possible values : alsa, oss, portaudio
-SOUND_ENGINE = alsa
-PROFILE = 0
+SOUND_ENGINE = sdl12
+PROFILE = APPLY
 HUGE_PAGES = 1
 
 #### End of Configuration
@@ -21,13 +21,13 @@ INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers 
 DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
 DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\"
 # Extra defines
-DEFINES		+= -DUSE_TWEAKS -DENABLE_JOYSTICKCODE -DIPU_SCALE -DFORCE_FRAMESKIP=0x4
+DEFINES		+= -DUSE_TWEAKS -DENABLE_JOYSTICKCODE -DIPU_SCALE -DUSE_FRAME_SKIP -DVIRTUAL_SURFACE
 
 #-fdata-sections -ffunction-sections
 CFLAGS		= -Ofast -fdata-sections -ffunction-sections -fsection-anchors -fno-builtin -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -march=mips32r2 -mtune=mips32r2 -flto -fno-common $(INCLUDES) $(DEFINES)
-CFLAGS		+= -mplt -mno-shared
+CFLAGS		+= -mno-shared -fno-PIC
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/media/data/local/home
+CFLAGS 		+= -fprofile-generate=/media/data/local/home/vbanext
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
@@ -36,7 +36,7 @@ CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ifeq ($(HUGE_PAGES), 0)
 LDFLAGS		+= -nodefaultlibs
 endif
-LDFLAGS     = -lc -lgcc -lSDL -lasound -Wl,-O1,--sort-common,--as-needed,--gc-sections -flto -s
+LDFLAGS     = -lc -lgcc -lSDL -lasound -Wl,-O1,--sort-common,--as-needed,--gc-sections -no-pie -flto -s
 ifeq ($(HUGE_PAGES), 1)
 LDFLAGS		+= -Wl,-zcommon-page-size=2097152 -Wl,-zmax-page-size=2097152 -lhugetlbfs
 endif

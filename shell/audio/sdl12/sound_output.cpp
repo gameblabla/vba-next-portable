@@ -16,7 +16,7 @@ static SDL_cond *sound_cv;
 
 static int32_t BUFFSIZE;
 static uint8_t *buffer;
-static uint32_t buf_read_pos = 0;
+static int32_t buf_read_pos = 0;
 static uint32_t buf_write_pos = 0;
 static int32_t buffered_bytes = 0;
 
@@ -39,7 +39,7 @@ static int32_t sdl_write_buffer_m(uint8_t* data, int32_t len)
 
 static void sdl_write_buffer(uint8_t* data, int32_t len)
 {
-	for(uint32_t i = 0; i < len; i += 4) 
+	for(int32_t i = 0; i < len; i += 4) 
 	{
 		if(buffered_bytes == BUFFSIZE) return; // just drop samples
 		*(int32_t*)((char*)(buffer + buf_write_pos)) = *(int32_t*)((char*)(data + i));
@@ -105,7 +105,7 @@ uint32_t Audio_Init()
 	aspec.userdata = NULL;
 
 	/* initialize the SDL Audio system */
-	if (SDL_InitSubSystem (SDL_INIT_AUDIO | SDL_INIT_NOPARACHUTE)) 
+	if (SDL_InitSubSystem (SDL_INIT_AUDIO)) 
 	{
 		printf("SDL: Initializing of SDL Audio failed: %s.\n", SDL_GetError());
 		return 1;
@@ -140,6 +140,12 @@ void Audio_Write(int16_t* buffer, uint32_t buffer_size)
 void Audio_Close()
 {
 	SDL_PauseAudio(1);
+	if (buffer)
+	{
+		free(buffer);
+		buffer = NULL;
+	}
+	
 	if (mutex) 
 	{
 		SDL_LockMutex(sound_mutex);
@@ -151,6 +157,5 @@ void Audio_Close()
 		SDL_DestroyMutex(sound_mutex);
 	}
 	SDL_CloseAudio();
-	SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	buffer = NULL;
+	if (SDL_WasInit(SDL_INIT_AUDIO) & SDL_INIT_AUDIO) SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }

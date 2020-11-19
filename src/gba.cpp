@@ -99,11 +99,9 @@ uint8_t *rom = 0;
 uint8_t *bios = 0;
 uint8_t *vram = 0;
 
-#ifdef INTERNAL_BUFFER_GBA
-uint16_t *pix = 0;
-#else
+uint16_t *pix = NULL;
+#ifndef VIRTUAL_SCREEN
 #include <SDL/SDL.h>
-extern uint16_t* pix;
 extern SDL_Surface *sdl_screen;
 #define DRAW_UNLOCK SDL_UnlockSurface(sdl_screen);
 #define DRAW_LOCK SDL_LockSurface(sdl_screen);
@@ -139,7 +137,7 @@ static void hardware_reset() {
 	#if VITA
 		#define THREADED_RENDERER_COUNT 2
 	#else
-		#define THREADED_RENDERER_COUNT 1
+		#define THREADED_RENDERER_COUNT 4
 	#endif
 
 	#include "thread.h"
@@ -815,77 +813,6 @@ static uint32_t cpuDmaPC = 0;
 static bool cpuDmaRunning = false;
 
 static const uint32_t  objTilesAddress [3] = {0x010000, 0x014000, 0x014000};
-
-static uint8_t* CPUDecodeAddress(uint32_t address) {
-
-	switch(address >> 24) {
-		case 0:
-			/* BIOS */
-			if(bus.reg[15].I >> 24) {
-				if(address < 0x4000)
-					return biosProtected;
-				else
-					goto unreadable;
-			} else
-				return bios + (address & 0x3FFC);
-		case 0x02:
-			/* external work RAM */
-			return workRAM + (address & 0x3FFFC);
-		case 0x03:
-			/* internal work RAM */
-			return internalRAM + (address & 0x7ffC);
-		case 0x04:
-			/* I/O registers */
-			if((address < 0x4000400) && ioReadable[address & 0x3fc]) {
-				if(ioReadable[(address & 0x3fc) + 2])
-					return ioMem + (address & 0x3fC);
-				else
-					return ioMem + (address & 0x3fc);
-			}
-			else
-				goto unreadable;
-			break;
-		case 0x05:
-			/* palette RAM */
-			return paletteRAM + (address & 0x3fC);
-		case 0x06:
-			/* VRAM */
-			address = (address & 0x1fffc);
-			if ((R_DISPCNT_Video_Mode >2) && ((address & 0x1C000) == 0x18000))
-				break;
-			if ((address & 0x18000) == 0x18000)
-				address &= 0x17fff;
-			return vram + address;
-		case 0x07:
-			/* OAM RAM */
-			return oam + (address & 0x3FC);
-		case 0x08:
-		case 0x09:
-		case 0x0A:
-		case 0x0B: 
-		case 0x0C: 
-			/* gamepak ROM */
-			return rom + (address & 0x1FFFFFC);
-		case 0x0D:
-        	//value = eepromRead();
-			break;
-		case 14:
-      	case 15:
-			//value = flashRead(address) * 0x01010101;
-			break;
-		default:
-unreadable:
-			/*
-			if(armState)
-				value = CPUReadHalfWordQuick(bus.reg[15].I + (address & 2));
-			else
-				value = CPUReadHalfWordQuick(bus.reg[15].I);
-			*/
-			break;
-	}
-
-	return NULL;
-}
 
 static INLINE u32 CPUReadMemory(u32 address)
 {
@@ -6613,9 +6540,6 @@ static int thumbExecute (void)
 	GBA GFX
 ============================================================ */
 
-static u32 map_widths[] = { 256, 512, 256, 512 };
-static u32 map_heights[] = { 256, 256, 512, 512 };
-
 #ifdef TILED_RENDERING
 #ifdef _MSC_VER
 union u8h
@@ -9131,7 +9055,7 @@ void CPUCleanUp (void)
 		bios = NULL;
 	}
 
-#ifdef INTERNAL_BUFFER_GBA
+#ifdef VIRTUAL_SURFACE
 	if(pix != NULL) {
 		memalign_free(pix);
 		pix = NULL;
@@ -9165,7 +9089,7 @@ bool CPUSetupBuffers()
 	paletteRAM = (uint8_t *)memalign_alloc_aligned(0x400);
 	vram = (uint8_t *)memalign_alloc_aligned(0x20000);
 	oam = (uint8_t *)memalign_alloc_aligned(0x400);
-	#ifdef INTERNAL_BUFFER_GBA
+	#ifdef VIRTUAL_SURFACE
 	pix = (uint16_t *)memalign_alloc_aligned(2 * PIX_BUFFER_SCREEN_WIDTH * 160);
 	#endif
 	ioMem = (uint8_t *)memalign_alloc_aligned(0x400);
@@ -9177,7 +9101,9 @@ bool CPUSetupBuffers()
 	memset(paletteRAM, 1, 0x400);
 	memset(vram, 1, 0x20000);
 	memset(oam, 1, 0x400);
+	#ifdef VIRTUAL_SURFACE
 	memset(pix, 1, 2 * PIX_BUFFER_SCREEN_WIDTH * 160);
+	#endif
 	memset(ioMem, 1, 0x400);
 
 	if(rom == NULL || workRAM == NULL || bios == NULL ||
@@ -12763,7 +12689,9 @@ void CPUReset (void)
 	memset(&bus.reg[0], 0, sizeof(bus.reg));	// clean registers
 	memset(oam, 0, 0x400);				// clean OAM
 	memset(paletteRAM, 0, 0x400);		// clean palette
+	#ifdef VIRTUAL_SURFACE
 	memset(pix, 0, 2 * 160 * 240);		// clean picture
+	#endif
 	memset(vram, 0, 0x20000);			// clean vram
 	memset(ioMem, 0, 0x400);			// clean io memory
 
@@ -13206,9 +13134,9 @@ updateLoop:
 
 					if(R_VCOUNT == 160)
 		        	{
+#if USE_CHEATS
 		            	uint32_t ext = (joy >> 10);
 		            	// If no (m) code is enabled, apply the cheats at each LCDline
-#if USE_CHEATS
 		            	if(mastercode == 0)
 		                	remainingTicks += cheatsCheckKeys(io_registers[REG_P1] ^ 0x3FF, ext);
 #endif

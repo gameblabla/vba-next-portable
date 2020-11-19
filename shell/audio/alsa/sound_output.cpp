@@ -114,7 +114,6 @@ uint32_t Audio_Init()
 
 void Audio_Write(int16_t* buffer, uint32_t buffer_size)
 {
-	uint32_t i;
 	long ret, len;
 
 	if (!handle) return;

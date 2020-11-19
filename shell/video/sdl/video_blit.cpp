@@ -38,10 +38,13 @@ static SDL_Joystick *sdl_joy;
 #define SDL_TRIPLEBUF SDL_DOUBLEBUF
 #endif
 
+#ifndef VIRTUAL_SURFACE
+#error "VIRTUAL_SURFACE needs to be defined. Redo the compilation"
+#endif
+
 SDL_Surface *sdl_screen, *backbuffer;
 
 uint32_t width_of_surface;
-uint16_t* Draw_to_Virtual_Screen;
 
 void Init_Video()
 {
@@ -81,7 +84,6 @@ void Set_Video_InGame()
 	{
         default:
 			if (sdl_screen->w != HOST_WIDTH_RESOLUTION) sdl_screen = SDL_SetVideoMode(HOST_WIDTH_RESOLUTION, HOST_HEIGHT_RESOLUTION, 16, SDL_HWSURFACE);
-			//Draw_to_Virtual_Screen = (uint16_t*)pix;
 			width_of_surface = INTERNAL_GBA_WIDTH;
         break;
     }
@@ -103,15 +105,15 @@ void Update_Video_Menu()
 }
 
 
-void Update_Video_Ingame(uint16_t* __restrict__ pixels)
+void Update_Video_Ingame(void)
 {
-	uint_fast16_t x, y, pitch;
+	uint_fast16_t y, pitch;
 	uint32_t internal_width, internal_height;
 	uint16_t *source_graph, *src, *dst;
 
 	internal_width = INTERNAL_GBA_WIDTH;
 	internal_height = INTERNAL_GBA_HEIGHT;
-	source_graph = (uint16_t* __restrict__)pixels;
+	source_graph = (uint16_t* __restrict__)pix;
 	
 	SDL_LockSurface(sdl_screen);
 	
@@ -119,10 +121,10 @@ void Update_Video_Ingame(uint16_t* __restrict__ pixels)
 	{
 		// Fullscreen
 		case 0:
-			gba_upscale((uint16_t __restrict__*)sdl_screen->pixels, (uint16_t __restrict__*)source_graph, 240, 160, 512, sdl_screen->pitch);
+			gba_upscale((uint16_t __restrict__*)sdl_screen->pixels, (uint16_t __restrict__*)source_graph, 240, 160, PIX_BUFFER_SCREEN_WIDTH*2, sdl_screen->pitch);
 		break;
 		case 1:
-			gba_upscale_aspect((uint16_t __restrict__*)sdl_screen->pixels + (480*8), (uint16_t __restrict__*)source_graph, 240, 160, 512, sdl_screen->pitch);
+			gba_upscale_aspect((uint16_t __restrict__*)sdl_screen->pixels + (480*8), (uint16_t __restrict__*)source_graph, 240, 160, PIX_BUFFER_SCREEN_WIDTH*2, sdl_screen->pitch);
 		break;
 		case 2:
 			pitch = HOST_WIDTH_RESOLUTION;

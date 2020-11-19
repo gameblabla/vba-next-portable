@@ -63,7 +63,6 @@ void EEPROM_Menu(uint_fast8_t load_mode)
 
 static void config_load()
 {
-	uint_fast8_t i;
 	char config_path[512];
 	FILE* fp;
 	snprintf(config_path, sizeof(config_path), "%s/%s.cfg", conf_path, GameName_emu);
@@ -350,7 +349,6 @@ void Menu()
 	char text[50];
     int16_t pressed = 0;
     int16_t currentselection = 1;
-    SDL_Rect dstRect;
     SDL_Event Event;
     
     Set_Video_Menu();

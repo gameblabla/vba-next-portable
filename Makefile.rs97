@@ -7,7 +7,7 @@ CXX			= /opt/rs97-toolchain/bin/mipsel-linux-gcc
 # Possible values : retrostone, rs97, rs90
 PORT = gcw0
 # Possible values : alsa, oss, portaudio
-SOUND_ENGINE = oss
+SOUND_ENGINE = sdl12
 
 PROFILE = 0
 
@@ -18,7 +18,7 @@ GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 INCLUDES	= -Ilibretro-common/include -Isrc
 INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers -Ishell/input/sdl -Ishell/fonts -Ishell/menu
 
-DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND -DINTERNAL_BUFFER_GBA
+DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
 DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\" -DFORCE_FRAMESKIP=0x4
 # Extra defines
 DEFINES		+= -DUSE_TWEAKS -DRS97 -DIPU_SCALE -DFORCE_FRAMESKIP=0x4

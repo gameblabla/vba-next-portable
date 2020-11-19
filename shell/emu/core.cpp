@@ -305,7 +305,7 @@ static void gba_init(void)
    uint8_t * state_buf = (uint8_t*)malloc(2000000);
    serialize_size = CPUWriteState(state_buf, 2000000);
    free(state_buf);
-
+   state_buf = NULL;
 #if USE_FRAME_SKIP
 	SetFrameskip(get_frameskip_code());
 #endif
@@ -341,7 +341,7 @@ static uint32_t Timer_Read(void)
 	return (((tval.tv_sec*1000000) + (tval.tv_usec)));
 }
 static long lastTick = 0, newTick;
-static uint32_t video_frames = 0, FPS = 60, FrameSkip = 0;
+static uint32_t video_frames = 0, FPS = 60;
 #endif
 
 void vbanext_run(void)
@@ -357,9 +357,10 @@ void vbanext_run(void)
    }while (!has_frame);
    
 #ifdef USE_FRAME_SKIP
+	extern bool fs_draw;
 	if (option.frameskip == 6)
 	{
-		video_frames++;
+		if (fs_draw == true) video_frames++;
 		newTick = Timer_Read();
 		if ( (newTick) - (lastTick) > 1000000) 
 		{
@@ -369,14 +370,12 @@ void vbanext_run(void)
 			
 			if (FPS > 58)
 			{
-				FrameSkip = 0;
 				SetFrameskip(0);
 			}
 			else
 			{
-				if (FPS > 44) SetFrameskip(0x1);
-				else if (FPS > 29) SetFrameskip(0x2);
-				else if (FPS > 14) SetFrameskip(0x3);
+				if (FPS > 50) SetFrameskip(0x2);
+				else if (FPS > 40) SetFrameskip(0x3);
 				else SetFrameskip(0x4);
 			}
 		}
@@ -450,26 +449,28 @@ static unsigned g_video_frames;
 
 void systemOnWriteDataToSoundBuffer(int16_t *finalWave, int length)
 {
-   Audio_Write(finalWave, (length) >> 1);
-   g_audio_frames += frames;
+	Audio_Write(finalWave, (length) >> 1);
+	g_audio_frames += frames;
 }
 
 
 void systemDrawScreen()
 {
-	Update_Video_Ingame((uint16_t*)pix);
+	Update_Video_Ingame();
 	g_video_frames++;
 	has_frame = 1;
 }
 
 void systemMessage(const char* fmt, ...)
 {
+   #ifdef DEBUG
    char buffer[256];
    va_list ap;
    va_start(ap, fmt);
    vsprintf(buffer, fmt, ap);
    printf("%s\n", buffer);
    va_end(ap);
+   #endif
 }
 
 void EEPROM_file(char* tmp, uint_fast8_t load)
@@ -536,6 +537,9 @@ int main(int argc, char* argv[])
 	}
 
 	snprintf(GameName_emu, sizeof(GameName_emu), "%s", basename(argv[1]));
+
+	Audio_Init();
+	
 	Init_Video();
 	
 #if USE_FRAME_SKIP
@@ -550,10 +554,9 @@ int main(int argc, char* argv[])
 	gba_init();
 	
 	vbanext_init();
+	
 	/* Init_Configuration also takes care of EEPROM saves so execute it after the game has been loaded in memory. */
 	Init_Configuration();
-	
-	Audio_Init();
 	
 	while(!done)
 	{
