@@ -368,14 +368,14 @@ void vbanext_run(void)
 			video_frames = 0;
 			lastTick = newTick;
 			
-			if (FPS > 58)
+			if (FPS > 60)
 			{
-				SetFrameskip(0);
+				SetFrameskip(0x13);
 			}
 			else
 			{
-				if (FPS > 50) SetFrameskip(0x2);
-				else if (FPS > 40) SetFrameskip(0x3);
+				if (FPS > 55) SetFrameskip(0x2);
+				else if (FPS > 45) SetFrameskip(0x3);
 				else SetFrameskip(0x4);
 			}
 		}
@@ -546,11 +546,12 @@ int main(int argc, char* argv[])
 	SetFrameskip(get_frameskip_code());
 #endif
 	ret = CPULoadRom(argv[1]);
-	if (ret < 1)
+	/* We need a more reliable way than that... */
+	/*if (ret < 1)
 	{
 		printf("Could not load ROM in memory\n");
 		return 0;
-	}
+	}*/
 	gba_init();
 	
 	vbanext_init();
