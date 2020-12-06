@@ -346,6 +346,16 @@ static uint32_t video_frames = 0, FPS = 60;
 
 void vbanext_run(void)
 {
+#ifndef USE_FRAME_SKIP
+	#define real_FPS (1000/59.7275)
+	Uint64 start;
+	start = SDL_GetTicks();
+#endif
+
+#ifdef USE_FRAME_SKIP
+	newTick = Timer_Read();
+#endif
+
    joy = update_input();
 
    has_frame = 0;
@@ -356,21 +366,23 @@ void vbanext_run(void)
       CPULoop();
    }while (!has_frame);
    
+#ifndef USE_FRAME_SKIP
+	if(SDL_GetTicks() < real_FPS) SDL_Delay(real_FPS-(SDL_GetTicks()-start));
+#endif
+   
 #ifdef USE_FRAME_SKIP
 	extern bool fs_draw;
 	if (option.frameskip == 6)
 	{
 		if (fs_draw == true) video_frames++;
-		newTick = Timer_Read();
 		if ( (newTick) - (lastTick) > 1000000) 
 		{
 			FPS = video_frames;
 			video_frames = 0;
 			lastTick = newTick;
-			
 			if (FPS > 60)
 			{
-				SetFrameskip(0x13);
+				SetFrameskip(0x0);
 			}
 			else
 			{

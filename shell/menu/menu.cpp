@@ -95,7 +95,7 @@ static void config_load()
 		/* Set default to keep aspect */
 		option.fullscreen = 2;
 		#if USE_FRAME_SKIP
-		option.frameskip = 5;
+		option.frameskip = 6;
 		#else
 		option.frameskip = 1;
 		#endif
