@@ -262,7 +262,7 @@ static void hardware_reset() {
 	#define RENDERER_R_WIN_OBJ_Mask     (RENDERER_IO_REGISTERS[REG_WINOUT] >> 8)
 
 #else
-	#define INIT_RENDERER_CONTEXT(__renderer_idx__) 0
+	#define INIT_RENDERER_CONTEXT(__renderer_idx__) (void(0))
 
     #define RENDERER_BG2C gfxBG2Changed
 	#define RENDERER_BG3C gfxBG3Changed
@@ -442,7 +442,7 @@ static bool Z_FLAG = 0;
 static bool V_FLAG = 0;
 static bool armState = true;
 static bool armIrqEnable = true;
-static int armMode = 0x1f;
+static uint32_t armMode = 0x1f;
 
 typedef enum
 {
