@@ -346,12 +346,6 @@ static uint32_t video_frames = 0, FPS = 60;
 
 void vbanext_run(void)
 {
-#ifndef USE_FRAME_SKIP
-	#define real_FPS (1000/59.7275)
-	Uint64 start;
-	start = SDL_GetTicks();
-#endif
-
 #ifdef USE_FRAME_SKIP
 	newTick = Timer_Read();
 #endif
@@ -365,10 +359,6 @@ void vbanext_run(void)
    {
       CPULoop();
    }while (!has_frame);
-   
-#ifndef USE_FRAME_SKIP
-	if(SDL_GetTicks() < real_FPS) SDL_Delay(real_FPS-(SDL_GetTicks()-start));
-#endif
    
 #ifdef USE_FRAME_SKIP
 	extern bool fs_draw;
@@ -550,6 +540,8 @@ int main(int argc, char* argv[])
 
 	snprintf(GameName_emu, sizeof(GameName_emu), "%s", basename(argv[1]));
 
+	Init_Configuration();
+
 	Audio_Init();
 	
 	Init_Video();
@@ -568,8 +560,10 @@ int main(int argc, char* argv[])
 	
 	vbanext_init();
 	
-	/* Init_Configuration also takes care of EEPROM saves so execute it after the game has been loaded in memory. */
-	Init_Configuration();
+	/* This needs to be loaded after everything is created. Used to be it in Init_Configuration 
+	* but some ports required the config file to be loaded before setting up the surface.
+	* This needs to be loaded after the ROM is in memory. */
+	EEPROM_Menu(1);
 	
 	while(!done)
 	{
