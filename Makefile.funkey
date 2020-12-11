@@ -1,0 +1,70 @@
+PRGNAME     = vbanext.elf
+CC          = /opt/funkey-toolchain/bin/arm-linux-gcc
+CXX 		= /opt/funkey-toolchain/bin/arm-linux-g++
+#### Configuration
+
+# Possible values : retrostone, rs97, rs90
+PORT = funkey
+# Possible values : alsa, oss, portaudio
+SOUND_ENGINE = tinyalsa
+PROFILE = 0
+
+#### End of Configuration
+
+GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
+
+INCLUDES	= -Ilibretro-common/include -Isrc
+INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers -Ishell/input/sdl -Ishell/fonts -Ishell/menu
+
+DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
+DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\" 
+
+# Retrostone extra defines
+DEFINES		+= -DHAVE_NEON -DUSE_TWEAKS -DUSE_FRAME_SKIP
+
+CFLAGS		= -Ofast -fsingle-precision-constant -fno-PIC -flto -fno-common -Wall $(INCLUDES) $(DEFINES)
+ifeq ($(PROFILE), YES)
+CFLAGS 		+= -fprofile-generate=/mnt/vbanext_profile
+endif
+ifeq ($(PROFILE), APPLY)
+CFLAGS 		+= -fprofile-use
+endif
+CFLAGS		+= -march=armv7-a+neon-vfpv4 -mtune=cortex-a7 -mfpu=neon-vfpv4
+CFLAGS		+= -fdata-sections -ffunction-sections -fsingle-precision-constant -freorder-functions -fno-math-errno -fgcse-las -fgcse-sm -fmerge-all-constants
+CXXFLAGS	= $(CFLAGS) -ftree-vectorize -fno-rtti -fno-exceptions -fno-threadsafe-statics -fno-enforce-eh-specs -fstrict-enums -std=gnu++11
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lm -lSDL -ltinyalsa -lz -pthread -Wl,-z,norelro -Wl,--hash-style=gnu -Wl,--build-id=none -Wl,-O1,--sort-common,--as-needed,--gc-sections -flto -no-pie -s
+
+ifeq ($(SOUND_ENGINE), alsa)
+LDFLAGS 		+= -lasound
+endif
+ifeq ($(SOUND_ENGINE), portaudio)
+LDFLAGS 		+= -lasound -lportaudio
+endif
+ifeq ($(PROFILE), YES)
+LDFLAGS 		+= -lgcov
+endif
+
+# Files to be compiled
+SRCDIR 		=  ./src ./libretro-common ./libretro-common/rthreads ./shell ./shell/scalers ./shell/emu ./shell/menu
+SRCDIR		+= ./shell/input/sdl/ ./shell/video/$(PORT) ./shell/audio/$(SOUND_ENGINE)
+VPATH		= $(SRCDIR)
+SRC_C		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
+SRC_CPP		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
+SRC_S		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.S))
+OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
+OBJ_CPP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CPP)))
+OBJ_S		= $(notdir $(patsubst %.S, %.o, $(SRC_S)))
+OBJS		= $(OBJ_C) $(OBJ_CPP) $(OBJ_S)
+
+# Rules to make executable
+$(PRGNAME): $(OBJS)  
+	$(CXX) $(CXXFLAGS) -o $(PRGNAME) $^ $(LDFLAGS)
+	
+$(OBJ_CPP) : %.o : %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	
+$(OBJ_S) : %.o : %.S
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(PRGNAME)$(EXESUFFIX) *.o
