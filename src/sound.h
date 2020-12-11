@@ -9,8 +9,14 @@
 #define FIFOB_L 0xa4
 #define FIFOB_H 0xa6
 
+#ifdef FASTBUILD
+#define BLIP_BUFFER_ACCURACY 8
+#define BLIP_PHASE_BITS 6
+#else
 #define BLIP_BUFFER_ACCURACY 16
 #define BLIP_PHASE_BITS 8
+#endif
+
 #define BLIP_WIDEST_IMPULSE_ 16
 #define BLIP_BUFFER_EXTRA_ 18
 #define BLIP_RES 256
