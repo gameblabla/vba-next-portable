@@ -23,7 +23,7 @@ DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\" -DRETROSTONE -DVIRTUAL_SURFACE
 # Retrostone extra defines
 DEFINES		+= -DHAVE_NEON -DTHREADED_RENDERER
 
-CFLAGS		= -march=armv7ve+neon-vfpv4 -mtune=cortex-a7 -mfpu=neon -Ofast -fsingle-precision-constant -fno-PIC -flto -fno-common -Wall $(INCLUDES) $(DEFINES)
+CFLAGS		= -march=armv7-a+neon-vfpv4 -mtune=cortex-a7 -mfpu=neon-vfpv4 -Ofast -fno-PIC -flto -fno-common -Wall $(INCLUDES) $(DEFINES)
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/home/useless/profile
 endif
@@ -41,7 +41,7 @@ ifeq ($(SOUND_ENGINE), portaudio)
 LDFLAGS 		+= -lasound -lportaudio
 endif
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -lgcov
+LDFLAGS 		+= -lgcov
 endif
 
 # Files to be compiled
@@ -58,7 +58,7 @@ OBJS		= $(OBJ_C) $(OBJ_CPP) $(OBJ_S)
 
 # Rules to make executable
 $(PRGNAME): $(OBJS)  
-	$(CC) $(CFLAGS) -std=gnu99 -o $(PRGNAME) $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -std=gnu99 -o $(PRGNAME) $^ $(LDFLAGS)
 	
 $(OBJ_CPP) : %.o : %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<

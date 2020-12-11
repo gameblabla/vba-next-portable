@@ -7,7 +7,7 @@ CXX			= /opt/gcw0-toolchain-static/bin/mipsel-linux-gcc
 # Possible values : retrostone, rs97, rs90
 PORT = sdl
 # Possible values : alsa, oss, portaudio
-SOUND_ENGINE = alsa
+SOUND_ENGINE = sdl12
 
 PROFILE = 0
 
@@ -21,10 +21,10 @@ INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers 
 DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
 DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\"
 # Extra defines
-DEFINES		+= -DUSE_TWEAKS -DENABLE_JOYSTICKCODE -DGKD350_BUG_INPUT -DINTERNAL_BUFFER_GBA -DVIRTUAL_SURFACE
+DEFINES		+= -DUSE_TWEAKS -DENABLE_JOYSTICKCODE -DGKD350_BUG_INPUT -DVIRTUAL_SURFACE
 
 #-fdata-sections -ffunction-sections
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -fsection-anchors -fno-builtin -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -mips32r2 -fno-PIC -mno-abicalls -flto -fno-common $(INCLUDES) $(DEFINES)
+CFLAGS		= -Wall -Wextra -Ofast -fdata-sections -ffunction-sections -fsection-anchors -mno-memcpy -fno-builtin -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -march=mips32r2 -mtune=mips32r2 -fno-PIC -mno-abicalls -flto -fno-common $(INCLUDES) $(DEFINES)
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/media/roms/vba_gcda
 else ifeq ($(PROFILE), APPLY)
@@ -32,7 +32,7 @@ CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
 
 CXXFLAGS	= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
-LDFLAGS     = -nodefaultlibs -lc -lgcc -lm -lSDL -lasound -Wl,-O1,--sort-common,--as-needed,--gc-sections -flto -s
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lm -lSDL -lasound -Wl,-z,norelro -Wl,--build-id=none -Wl,-O1,--sort-common,--as-needed,--gc-sections -no-pie -flto -s
 ifeq ($(PROFILE), YES)
 LDFLAGS 		+= -lgcov
 endif
