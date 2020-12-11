@@ -267,8 +267,6 @@ static void Input_Remapping()
 					{
 						SDL_FillRect( backbuffer, NULL, 0 );
 						print_string("Please press button for mapping", TextWhite, TextBlue, 37, 108, (uint16_t*) backbuffer->pixels);
-						bitmap_scale(0,0,320,240,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,320,0,(uint16_t* )backbuffer->pixels,(uint16_t* )sdl_screen->pixels);
-						
 						while (SDL_PollEvent(&Event))
 						{
 							if (Event.type == SDL_KEYDOWN)
@@ -280,7 +278,7 @@ static void Input_Remapping()
 								}
 							}
 						}
-						SDL_Flip(sdl_screen);
+						Update_Video_Menu();
 					}
 				break;
             }
@@ -331,8 +329,7 @@ static void Input_Remapping()
 		if (currentselection == 10) print_string(text, TextRed, 0, 165, 25+2, (uint16_t*) backbuffer->pixels);
 		else print_string(text, TextWhite, 0, 165, 25+2, (uint16_t*) backbuffer->pixels);
 	
-		bitmap_scale(0,0,320,240,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,320,0,(uint16_t* )backbuffer->pixels,(uint16_t* )sdl_screen->pixels);
-		SDL_Flip(sdl_screen);
+		Update_Video_Menu();
 	}
 	
 	config_save();
@@ -541,20 +538,10 @@ void Menu()
 				break;
             }
         }
-
-		//bitmap_scale(0,0,320,240,HOST_WIDTH_RESOLUTION,HOST_HEIGHT_RESOLUTION,320,0,(uint16_t* )backbuffer->pixels,(uint16_t* )sdl_screen->pixels);
-		SDL_SoftStretch(backbuffer, NULL, sdl_screen, NULL);
-		SDL_Flip(sdl_screen);
+		Update_Video_Menu();
     }
-  
-    SDL_FillRect(sdl_screen, NULL, 0);
-    SDL_Flip(sdl_screen);
-    SDL_FillRect(sdl_screen, NULL, 0);
-    SDL_Flip(sdl_screen);
-    #ifdef SDL_TRIPLEBUF
-    SDL_FillRect(sdl_screen, NULL, 0);
-    SDL_Flip(sdl_screen);
-    #endif
+    
+    Clean_Video();
     
     if (currentselection == EXIT_NUMBER)
     {
@@ -617,9 +604,6 @@ void Init_Configuration()
 	{
 		mkdir(eeprom_path, 0755);
 	}
-	
-	/* Load eeprom file if it exists */
-	EEPROM_Menu(1);
 	
 	config_load();
 }

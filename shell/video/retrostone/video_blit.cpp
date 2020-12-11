@@ -72,6 +72,15 @@ void Set_Video_InGame()
     }
 }
 
+void Clean_Video()
+{
+	for(uint_fast8_t i=0;i<3;i++)
+	{
+		SDL_FillRect(sdl_screen, NULL, 0);
+		SDL_Flip(sdl_screen);
+	}	
+}
+
 void Close_Video()
 {
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
@@ -81,6 +90,7 @@ void Close_Video()
 
 void Update_Video_Menu()
 {
+	SDL_SoftStretch(backbuffer, NULL, sdl_screen, NULL);
 	SDL_Flip(sdl_screen);
 }
 

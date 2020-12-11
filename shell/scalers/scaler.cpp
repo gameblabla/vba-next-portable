@@ -1,6 +1,65 @@
 #include <cstddef>
 #include "scaler.h"
 
+#define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
+#define AVERAGEHI(AB) ((((AB) & 0xF7DE0000) >> 1) + (((AB) & 0xF7DE) << 15))
+#define AVERAGELO(CD) ((((CD) & 0xF7DE) >> 1) + (((CD) & 0xF7DE0000) >> 17))
+
+// Support math
+#define Half(A) (((A) >> 1) & 0x7BEF)
+#define Quarter(A) (((A) >> 2) & 0x39E7)
+// Error correction expressions to piece back the lower bits together
+#define RestHalf(A) ((A) & 0x0821)
+#define RestQuarter(A) ((A) & 0x1863)
+
+// Error correction expressions for quarters of pixels
+#define Corr1_3(A, B)     Quarter(RestQuarter(A) + (RestHalf(B) << 1) + RestQuarter(B))
+#define Corr3_1(A, B)     Quarter((RestHalf(A) << 1) + RestQuarter(A) + RestQuarter(B))
+
+// Error correction expressions for halves
+#define Corr1_1(A, B)     ((A) & (B) & 0x0821)
+
+// Quarters
+#define Weight1_3(A, B)   (Quarter(A) + Half(B) + Quarter(B) + Corr1_3(A, B))
+#define Weight3_1(A, B)   (Half(A) + Quarter(A) + Quarter(B) + Corr3_1(A, B))
+
+
+
+#define Weight1_1(A, B)   (Half(A) + Half(B) + Corr1_1(A, B))
+
+void upscale_160x240_to_240x240_bilinearish(uint16_t __restrict__* Src16, uint16_t __restrict__ *  Dst16)
+{
+	// There are 80 blocks of 2 pixels vertically, and 240 of 1 horizontally.
+	// Each block of 2x1 becomes 3x1.
+	uint32_t BlockX, BlockY;
+	uint16_t* BlockSrc;
+	uint16_t* BlockDst;
+	for (BlockY = 0; BlockY < 80; BlockY++)
+	{
+		BlockSrc = Src16 + BlockY * 240 * 2;
+		BlockDst = Dst16 + BlockY * 240 * 3;
+		for (BlockX = 0; BlockX < 240; BlockX++)
+		{
+			/* Vertically:
+			 * Before(2):
+			 * (a)(b)
+			 * After(3):
+			 * (a)(ab)(b)
+			 */
+
+			// -- Column 1 --
+			uint16_t  _1 = *(BlockSrc               );
+			*(BlockDst               ) = _1;
+			uint16_t  _2 = *(BlockSrc            + 240*1);
+			*(BlockDst            + 240*1) = Weight1_1( _1,  _2);
+			*(BlockDst            + 240*2) = _2;
+
+			BlockSrc += 1;
+			BlockDst += 1;
+		}
+	}
+}
+
 /* alekmaul's scaler taken from mame4all */
 void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t visheight, uint32_t newwidth, uint32_t newheight,uint32_t pitchsrc,uint32_t pitchdest, uint16_t __restrict__* src, uint16_t __restrict__ *  dst)
 {
@@ -26,6 +85,34 @@ void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t 
     } while (--H);
 }
 
+
+
+#define prefetch(a,b)   __builtin_prefetch(a,b)
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
+
+
+#define Average(A, B) ((((A) & 0xF7DE) >> 1) + (((B) & 0xF7DE) >> 1) + ((A) & (B) & 0x0821))
+
+/* Calculates the average of two pairs of RGB565 pixels. The result is, in
+ * the lower bits, the average of both lower pixels, and in the upper bits,
+ * the average of both upper pixels. */
+#define Average32(A, B) ((((A) & 0xF7DEF7DE) >> 1) + (((B) & 0xF7DEF7DE) >> 1) + ((A) & (B) & 0x08210821))
+
+/* Raises a pixel from the lower half to the upper half of a pair. */
+#define Raise(N) ((N) << 16)
+
+/* Extracts the upper pixel of a pair into the lower pixel of a pair. */
+#define Hi(N) ((N) >> 16)
+
+/* Extracts the lower pixel of a pair. */
+#define Lo(N) ((N) & 0xFFFF)
+
+/* Calculates the average of two RGB565 pixels. The source of the pixels is
+ * the lower 16 bits of both parameters. The result is in the lower 16 bits.
+ * The average is weighted so that the first pixel contributes 3/4 of its
+ * color and the second pixel contributes 1/4. */
+#define AverageQuarters3_1(A, B) ( (((A) & 0xF7DE) >> 1) + (((A) & 0xE79C) >> 2) + (((B) & 0xE79C) >> 2) + ((( (( ((A) & 0x1863) + ((A) & 0x0821) ) << 1) + ((B) & 0x1863) ) >> 2) & 0x1863) )
 
 
 void gba_upscale(uint16_t __restrict__ *to, uint16_t __restrict__ *from, uint32_t src_x, uint32_t src_y, uint32_t src_pitch, uint32_t dst_pitch)

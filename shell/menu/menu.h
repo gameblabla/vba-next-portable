@@ -18,6 +18,7 @@ extern uint32_t done;
 
 extern void Menu();
 extern void Init_Configuration();
+extern void EEPROM_Menu(uint_fast8_t load_mode);
 
 #ifdef __cplusplus
 };
