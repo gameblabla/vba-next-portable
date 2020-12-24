@@ -1,0 +1,70 @@
+PRGNAME     = vbanext.elf
+CC          = /opt/retrostone2-toolchain/bin/arm-linux-gcc
+CXX 		= /opt/retrostone2-toolchain/bin/arm-linux-g++
+
+#### Configuration
+
+# Possible values : retrostone, rs97, rs90
+PORT = gcw0
+# Possible values : alsa, oss, portaudio
+SOUND_ENGINE = sdl12
+PROFILE = APPLY
+
+#### End of Configuration
+
+GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
+
+INCLUDES	= -Ilibretro-common/include -Isrc
+INCLUDES	+= -Ishell/headers -Ishell/video/$(PORT) -Ishell/audio -Ishell/scalers -Ishell/input/sdl -Ishell/fonts -Ishell/menu
+
+DEFINES		= -DLSB_FIRST -DINLINE="inline" -DWANT_16BPP -DFRONTEND_SUPPORTS_RGB565 -DINLINE="inline" -DNDEBUG -DWANT_STEREO_SOUND
+DEFINES		+= -DGIT_VERSION=\"$(GIT_VERSION)\" -DRETROSTONE -DVIRTUAL_SURFACE
+
+# Retrostone extra defines
+DEFINES		+= -DHAVE_NEON -DIPU_SCALE -DUSE_FRAME_SKIP
+
+CFLAGS		= -march=armv7-a+neon-vfpv4 -mtune=cortex-a7 -mfpu=neon-vfpv4 -Ofast -fno-PIC -flto -fno-common -Wall $(INCLUDES) $(DEFINES)
+ifeq ($(PROFILE), YES)
+CFLAGS 		+= -fprofile-generate=/home/retrostone/profile
+endif
+ifeq ($(PROFILE), APPLY)
+CFLAGS 		+= -fprofile-use
+endif
+CFLAGS		+= -fdata-sections -ffunction-sections -fsingle-precision-constant
+CXXFLAGS	= $(CFLAGS) -ftree-vectorize -fno-rtti -fno-exceptions -std=gnu++11
+LDFLAGS     = -lc -lgcc -lm -lSDL -lz -pthread -flto -Wl,--as-needed -Wl,--gc-sections -s
+
+ifeq ($(SOUND_ENGINE), alsa)
+LDFLAGS 		+= -lasound
+endif
+ifeq ($(SOUND_ENGINE), portaudio)
+LDFLAGS 		+= -lasound -lportaudio
+endif
+ifeq ($(PROFILE), YES)
+LDFLAGS 		+= -lgcov
+endif
+
+# Files to be compiled
+SRCDIR 		=  ./src ./libretro-common ./libretro-common/rthreads ./shell ./shell/scalers ./shell/emu ./shell/menu
+SRCDIR		+= ./shell/input/sdl/ ./shell/video/$(PORT) ./shell/audio/$(SOUND_ENGINE)
+VPATH		= $(SRCDIR)
+SRC_C		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
+SRC_CPP		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
+SRC_S		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.S))
+OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
+OBJ_CPP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CPP)))
+OBJ_S		= $(notdir $(patsubst %.S, %.o, $(SRC_S)))
+OBJS		= $(OBJ_C) $(OBJ_CPP) $(OBJ_S)
+
+# Rules to make executable
+$(PRGNAME): $(OBJS)  
+	$(CXX) $(CXXFLAGS) -std=gnu99 -o $(PRGNAME) $^ $(LDFLAGS)
+	
+$(OBJ_CPP) : %.o : %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	
+$(OBJ_S) : %.o : %.S
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(PRGNAME)$(EXESUFFIX) *.o

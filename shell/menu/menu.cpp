@@ -97,7 +97,7 @@ static void config_load()
 		#if USE_FRAME_SKIP
 		option.frameskip = 6;
 		#else
-		option.frameskip = 1;
+		option.frameskip = 3;
 		#endif
 	}
 }
