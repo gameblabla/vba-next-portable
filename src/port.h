@@ -76,10 +76,10 @@
 #define WRITE16LE(base, value) *((u16 *)(base)) = _byteswap_ushort((value))
 #define WRITE32LE(base, value) *((u32 *)(base)) = _byteswap_ulong((value))
 #else
-#define READ16LE(x) (*((u16 *)(x))<<8)|(*((u16 *)(x))>>8);
-#define READ32LE(x) (*((u32 *)(x))<<24)|((*((u32 *)(x))<<8)&0xff0000)|((((*((u32 *)(x))(x)>>8)&0xff00)|(*((u32 *)(x))>>24);
-#define WRITE16LE(x,v) *((u16 *)(x)) = (*((u16 *)(v))<<8)|(*((u16 *)(v))>>8);
-#define WRITE32LE(x,v) *((u32 *)(x)) = ((v)<<24)|(((v)<<8)&0xff0000)|(((v)>>8)&0xff00)|((v)>>24);
+#define READ16LE( base)	__builtin_bswap16(*((u16 *)(base)))
+#define READ32LE( base) __builtin_bswap32(*((u32 *)(base)))
+#define WRITE16LE(base, value) *((u16 *)(base)) = __builtin_bswap16((value))
+#define WRITE32LE(base, value) *((u32 *)(base)) = __builtin_bswap32((value))
 #endif
 #else
 #define READ16LE(x) *((u16 *)(x))
