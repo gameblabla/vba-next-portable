@@ -12,10 +12,10 @@ struct pcm *pcm_out;
 
 uint32_t Audio_Init()
 {
-#ifdef NONBLOCKING_AUDIO
-	int flags = PCM_OUT | PCM_NONBLOCK | PCM_MMAP;
+#ifdef BLOCKING_AUDIO
+	int flags = PCM_OUT;
 #else
-	int flags = PCM_OUT | PCM_MMAP;
+	int flags = PCM_OUT | PCM_NONBLOCK;
 #endif
     struct pcm_config config = {
         .channels = 2,

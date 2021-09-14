@@ -36,10 +36,10 @@ uint32_t Audio_Init()
 		return 1;
 	}
 	
-#ifdef NONBLOCKING_AUDIO
-	snd_pcm_nonblock(handle, 1);
-#else
+#ifdef BLOCKING_AUDIO
 	snd_pcm_nonblock(handle, 0);
+#else
+	snd_pcm_nonblock(handle, 1);
 #endif
 
 	/* Allocate a hardware parameters object. */
